@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tokyo Pass Navigator — 내 패스로 갈 수 있을까?</title>
+<meta name="description" content="도쿄 여행 전에 미리 확인하세요. 패스 선택 → 경로 탐색 → 구매. 내가 가고 싶은 곳, 이 패스로 갈 수 있는지 바로 확인!">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f8f7f4;--surface:#fff;--surface2:#f2f1ee;
+  --border:#e4e2dc;--border2:#ccc9c0;
+  --text:#1a1917;--text2:#6b6860;--text3:#9e9b94;
+  --green:#1D9E75;--green-dark:#0F6E56;--green-bg:#E1F5EE;
+  --amber-bg:#FAEEDA;--amber-border:#FAC775;--amber-text:#633806;
+  --r:12px;--rs:8px;
+}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px 80px;}
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:20px 0 28px;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{width:36px;height:36px;background:var(--green);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.logo-text{font-size:17px;font-weight:700;letter-spacing:-.4px;}
+.logo-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+.sec-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+.hero{background:linear-gradient(135deg,#1D9E75 0%,#0F6E56 100%);border-radius:14px;padding:20px 18px 18px;margin-bottom:22px;color:white;}
+.hero-q{font-size:19px;font-weight:800;letter-spacing:-.4px;margin-bottom:7px;line-height:1.3;}
+.hero-desc{font-size:12px;opacity:.88;line-height:1.7;margin-bottom:14px;}
+.hero-steps{display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
+.hstep{background:rgba(255,255,255,.18);border-radius:20px;padding:4px 11px;font-size:11px;font-weight:700;}
+.hstep-arr{font-size:12px;opacity:.6;}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px;}
+@media(max-width:480px){.pgrid{grid-template-columns:1fr;}}
+.pc{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:14px 16px;cursor:pointer;transition:border-color .15s,background .15s,transform .1s;position:relative;}
+.pc:hover{border-color:var(--border2);transform:translateY(-1px);}
+.pc.sel{border-color:var(--green);border-width:2px;background:var(--green-bg);}
+.pc.sel::after{content:'✓';position:absolute;top:12px;right:14px;font-size:12px;color:var(--green);font-weight:700;}
+.pc-badge{display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:2px 7px;border-radius:20px;margin-bottom:8px;}
+.bm{background:#E8F4FD;color:#1a5f8c;}.bt{background:#FDE8F4;color:#8c1a6a;}.bj{background:#EEF8E8;color:#2d6b1a;}.ba{background:#E8FDF4;color:#0d6b45;}
+.pc-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.pc.sel .pc-name{color:var(--green-dark);}
+.pc-sub{font-size:11px;color:var(--text2);}
+
+.map-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px;}
+.map-hdr{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.map-hdr .mt{font-size:12px;font-weight:600;}
+.map-hdr .mc{font-size:11px;color:var(--text3);background:var(--surface2);padding:2px 8px;border-radius:20px;}
+.map-body{background:#f0efe8;padding:12px;overflow-x:auto;}
+#svgmap{display:block;min-width:460px;}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:24px;}
+.leg{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);}
+.leg-line{width:16px;height:3px;border-radius:2px;}
+.leg-dot{width:8px;height:8px;border-radius:50%;border:1.5px solid #888;background:white;}
+.route-row{display:grid;grid-template-columns:1fr 36px 1fr;gap:8px;align-items:center;margin-bottom:12px;}
+.sel-wrap{position:relative;}
+.sel-wrap::after{content:'▾';position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);pointer-events:none;}
+.route-row select{width:100%;appearance:none;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rs);padding:10px 32px 10px 12px;font-size:13px;color:var(--text);font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:border-color .12s;}
+.route-row select:focus{outline:none;border-color:var(--green);}
+.route-arrow{text-align:center;font-size:18px;color:var(--text3);}
+.go-btn{width:100%;padding:12px;background:var(--green);color:white;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:background .12s,transform .1s;margin-bottom:16px;letter-spacing:-.2px;}
+.go-btn:hover{background:var(--green-dark);}
+.go-btn:active{transform:scale(.98);}
+.go-btn:disabled{background:var(--surface2);color:var(--text3);cursor:not-allowed;transform:none;}
+.result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px;}
+.res-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.res-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--green-bg);color:var(--green);}
+.step{display:flex;gap:10px;padding:2px 0;}
+.step-line{display:flex;flex-direction:column;align-items:center;padding-top:5px;min-width:10px;}
+.s-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.s-bar{width:2px;flex:1;min-height:20px;background:var(--border2);margin:3px 0;}
+.step-info{flex:1;padding-bottom:10px;}
+.s-st{font-size:14px;font-weight:600;color:var(--text);}
+.s-ln{font-size:11px;color:var(--text2);margin-top:3px;line-height:1.6;}
+/* 방면 태그 */
+.direction-tag{
+  display:inline-block;
+  font-size:10px;font-weight:700;
+  padding:2px 8px;border-radius:20px;
+  margin-left:6px;vertical-align:middle;
+  background:#FFF3E0;color:#E65100;border:1px solid #FFB74D;
+}
+/* 환승 스텝 */
+.transfer-step .s-st{font-size:12px;color:var(--text3);font-weight:500;}
+.warn-card{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:var(--rs);padding:12px 14px;font-size:12px;color:var(--amber-text);margin-bottom:10px;line-height:1.6;}
+.info-card{background:var(--surface2);border-radius:var(--rs);padding:10px 14px;font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.6;}
+.buy-banner{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.buy-banner-text{flex:1;min-width:0;}
+.buy-banner-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:2px;}
+.buy-banner-name{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.buy-btn-kkday{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:#e8390e;color:white;border-radius:var(--rs);font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;transition:background .12s,transform .1s;font-family:'Noto Sans KR',sans-serif;flex-shrink:0;}
+.buy-btn-kkday:hover{background:#c42e0b;transform:translateY(-1px);}
+.buy-btn-jr{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:#004a97;color:white;border-radius:var(--rs);font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;transition:background .12s,transform .1s;font-family:'Noto Sans KR',sans-serif;flex-shrink:0;}
+.buy-btn-jr:hover{background:#003575;transform:translateY(-1px);}
+.buy-btn-mrt{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:#ff5a2b;color:white;border-radius:var(--rs);font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;transition:background .12s,transform .1s;font-family:'Noto Sans KR',sans-serif;flex-shrink:0;}
+.buy-btn-mrt:hover{background:#e04820;transform:translateY(-1px);}
+.buy-btn-local{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:#6b6860;color:white;border-radius:var(--rs);font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;transition:background .12s,transform .1s;font-family:'Noto Sans KR',sans-serif;flex-shrink:0;}
+.buy-btn-local:hover{background:#4a4840;transform:translateY(-1px);}
+.local-notice{font-size:10px;color:var(--text3);margin-top:5px;line-height:1.5;}
+.pc-buy-link{display:block;margin-top:7px;padding-top:7px;font-size:11px;font-weight:600;color:var(--green);text-decoration:none;border-top:.5px solid var(--green-border);}
+.pc-buy-link:hover{color:var(--green-dark);}
+.pc.sel .pc-buy-link{color:var(--green-dark);}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px;line-height:1.8;}
+.empty-icon{font-size:36px;margin-bottom:12px;}
+.footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--border);text-align:center;font-size:11px;color:var(--text3);line-height:1.8;}
+
+.route-map-wrap{background:#f0efe8;border-radius:var(--rs);overflow:hidden;margin-bottom:12px;border:1px solid var(--border);}
+.route-map-wrap svg{display:block;}
+.s-st-ko{font-size:14px;font-weight:700;color:var(--text);}
+.s-st-en{font-size:11px;font-weight:400;color:var(--text3);margin-left:4px;}
+.s-arr{font-size:13px;color:var(--text2);}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="top-bar">
+  <div class="logo">
+    <div class="logo-icon">🗺</div>
+    <div>
+      <div class="logo-text">Tokyo Pass Navigator</div>
+      <div class="logo-sub">도쿄 교통패스 경로 탐색기</div>
+    </div>
+  </div>
+</div>
+
+<!-- 히어로 -->
+<div class="hero">
+  <div class="hero-q">이 패스로 거기 갈 수 있을까? 🤔</div>
+  <div class="hero-desc">패스 선택 → 경로 탐색 → 구매<br>도쿄 여행 전에 미리 확인하고, 맞는 패스만 사세요</div>
+  <div class="hero-steps">
+    <span class="hstep">① 패스 선택</span>
+    <span class="hstep-arr">→</span>
+    <span class="hstep">② 경로 탐색</span>
+    <span class="hstep-arr">→</span>
+    <span class="hstep">③ 구매</span>
+  </div>
+</div>
+
+<div class="sec-label">패스 선택</div>
+<div class="pgrid" id="pgrid"></div>
+
+<div class="sec-label">이용 가능 노선도</div>
+<div class="map-card">
+  <div class="map-hdr">
+    <span class="mt" id="maptitle">패스를 선택하면 노선도가 표시됩니다</span>
+    <span class="mc" id="mapcnt"></span>
+  </div>
+  <div class="map-body"><svg id="svgmap" viewBox="0 0 640 310" width="100%"></svg></div>
+</div>
+<div class="legend" id="legrow"></div>
+
+<div class="sec-label">경로 탐색</div>
+<div class="route-row">
+  <div class="sel-wrap"><select id="fromsel"><option value="">출발역 선택</option></select></div>
+  <div class="route-arrow">→</div>
+  <div class="sel-wrap"><select id="tosel"><option value="">도착역 선택</option></select></div>
+</div>
+<button class="go-btn" id="gobtn" disabled onclick="doSearch()">경로 찾기</button>
+<div id="result">
+  <div class="empty-state">
+    <div class="empty-icon">🗺</div>
+    패스를 선택하고 출발역·도착역을 고르면<br><strong>이 패스로 갈 수 있는지</strong> 바로 확인할 수 있어요
+  </div>
+</div>
+<div class="footer">
+  데이터 출처: mini-tokyo-3d (MIT License) · 도쿄 메트로 9개 + 도에이 4개 + JR 3개 노선<br>
+  실제 운행 정보는 각 철도사 공식 사이트를 확인하세요
+</div>
+</div>
+<script>
+const LINES={"TokyoMetro.Ginza":{"ko":"긴자선","en":"Ginza Line","color":"#FF9500","type":"metro","stations":["TokyoMetro.Ginza.Shibuya","TokyoMetro.Ginza.OmoteSando","TokyoMetro.Ginza.Gaiemmae","TokyoMetro.Ginza.AoyamaItchome","TokyoMetro.Ginza.AkasakaMitsuke","TokyoMetro.Ginza.TameikeSanno","TokyoMetro.Ginza.Toranomon","TokyoMetro.Ginza.Shimbashi","TokyoMetro.Ginza.Ginza","TokyoMetro.Ginza.Kyobashi","TokyoMetro.Ginza.Nihombashi","TokyoMetro.Ginza.Mitsukoshimae","TokyoMetro.Ginza.Kanda","TokyoMetro.Ginza.Suehirocho","TokyoMetro.Ginza.UenoHirokoji","TokyoMetro.Ginza.Ueno","TokyoMetro.Ginza.Inaricho","TokyoMetro.Ginza.Tawaramachi","TokyoMetro.Ginza.Asakusa"],"asc":"아사쿠사방면","desc":"시부야방면","is_loop":false},"TokyoMetro.Marunouchi":{"ko":"마루노우치선","en":"Marunouchi Line","color":"#F62E36","type":"metro","stations":["TokyoMetro.Marunouchi.Ogikubo","TokyoMetro.Marunouchi.MinamiAsagaya","TokyoMetro.Marunouchi.ShinKoenji","TokyoMetro.Marunouchi.HigashiKoenji","TokyoMetro.Marunouchi.ShinNakano","TokyoMetro.Marunouchi.NakanoSakaue","TokyoMetro.Marunouchi.NishiShinjuku","TokyoMetro.Marunouchi.Shinjuku","TokyoMetro.Marunouchi.ShinjukuSanchome","TokyoMetro.Marunouchi.ShinjukuGyoemmae","TokyoMetro.Marunouchi.YotsuyaSanchome","TokyoMetro.Marunouchi.Yotsuya","TokyoMetro.Marunouchi.AkasakaMitsuke","TokyoMetro.Marunouchi.KokkaiGijidomae","TokyoMetro.Marunouchi.Kasumigaseki","TokyoMetro.Marunouchi.Ginza","TokyoMetro.Marunouchi.Tokyo","TokyoMetro.Marunouchi.Otemachi","TokyoMetro.Marunouchi.Awajicho","TokyoMetro.Marunouchi.Ochanomizu","TokyoMetro.Marunouchi.HongoSanchome","TokyoMetro.Marunouchi.Korakuen","TokyoMetro.Marunouchi.Myogadani","TokyoMetro.Marunouchi.ShinOtsuka","TokyoMetro.Marunouchi.Ikebukuro"],"asc":"이케부쿠로방면","desc":"오기쿠보방면","is_loop":false},"TokyoMetro.Hibiya":{"ko":"히비야선","en":"Hibiya Line","color":"#B5B5AC","type":"metro","stations":["TokyoMetro.Hibiya.NakaMeguro","TokyoMetro.Hibiya.Ebisu","TokyoMetro.Hibiya.HiroO","TokyoMetro.Hibiya.Roppongi","TokyoMetro.Hibiya.Kamiyacho","TokyoMetro.Hibiya.ToranomonHills","TokyoMetro.Hibiya.Kasumigaseki","TokyoMetro.Hibiya.Hibiya","TokyoMetro.Hibiya.Ginza","TokyoMetro.Hibiya.HigashiGinza","TokyoMetro.Hibiya.Tsukiji","TokyoMetro.Hibiya.Hatchobori","TokyoMetro.Hibiya.Kayabacho","TokyoMetro.Hibiya.Ningyocho","TokyoMetro.Hibiya.Kodemmacho","TokyoMetro.Hibiya.Akihabara","TokyoMetro.Hibiya.NakaOkachimachi","TokyoMetro.Hibiya.Ueno","TokyoMetro.Hibiya.Iriya","TokyoMetro.Hibiya.Minowa","TokyoMetro.Hibiya.MinamiSenju","TokyoMetro.Hibiya.KitaSenju","TokyoMetro.Hibiya.ShinKoshigaya"],"asc":"신코시가야방면","desc":"나카메구로방면","is_loop":false},"TokyoMetro.Tozai":{"ko":"도자이선","en":"Tozai Line","color":"#009BBF","type":"metro","stations":["TokyoMetro.Tozai.Nakano","TokyoMetro.Tozai.Ochiai","TokyoMetro.Tozai.Takadanobaba","TokyoMetro.Tozai.Waseda","TokyoMetro.Tozai.Kagurazaka","TokyoMetro.Tozai.Iidabashi","TokyoMetro.Tozai.Kudanshita","TokyoMetro.Tozai.Takebashi","TokyoMetro.Tozai.Otemachi","TokyoMetro.Tozai.Nihombashi","TokyoMetro.Tozai.Kayabacho","TokyoMetro.Tozai.MonzenNakacho","TokyoMetro.Tozai.Kiba","TokyoMetro.Tozai.Toyocho","TokyoMetro.Tozai.MinamiSunamachi","TokyoMetro.Tozai.NishiKasai","TokyoMetro.Tozai.Kasai","TokyoMetro.Tozai.Urayasu","TokyoMetro.Tozai.MinamiGyotoku","TokyoMetro.Tozai.Gyotoku","TokyoMetro.Tozai.Myoden","TokyoMetro.Tozai.BarakiNakayama","TokyoMetro.Tozai.NishiFunabashi"],"asc":"니시후나바시방면","desc":"나카노방면","is_loop":false},"TokyoMetro.Chiyoda":{"ko":"치요다선","en":"Chiyoda Line","color":"#00BB85","type":"metro","stations":["TokyoMetro.Chiyoda.Machida","TokyoMetro.Chiyoda.SeijogakuenMae","TokyoMetro.Chiyoda.YoyogiUehara","TokyoMetro.Chiyoda.YoyogiKoen","TokyoMetro.Chiyoda.MeijiJingumae","TokyoMetro.Chiyoda.OmoteSando","TokyoMetro.Chiyoda.Nogizaka","TokyoMetro.Chiyoda.Akasaka","TokyoMetro.Chiyoda.KokkaiGijidomae","TokyoMetro.Chiyoda.Kasumigaseki","TokyoMetro.Chiyoda.Hibiya","TokyoMetro.Chiyoda.Nijubashimae","TokyoMetro.Chiyoda.Otemachi","TokyoMetro.Chiyoda.ShinOchanomizu","TokyoMetro.Chiyoda.Yushima","TokyoMetro.Chiyoda.Nezu","TokyoMetro.Chiyoda.Sendagi","TokyoMetro.Chiyoda.NishiNippori","TokyoMetro.Chiyoda.Machiya","TokyoMetro.Chiyoda.KitaSenju","TokyoMetro.Chiyoda.Ayase","TokyoMetro.Chiyoda.KitaAyase"],"asc":"기타아야세방면","desc":"마치다방면","is_loop":false},"TokyoMetro.Yurakucho":{"ko":"유라쿠초선","en":"Yurakucho Line","color":"#C1A470","type":"metro","stations":["TokyoMetro.Yurakucho.Wakoshi","TokyoMetro.Yurakucho.ChikatetsuNarimasu","TokyoMetro.Yurakucho.ChikatetsuAkatsuka","TokyoMetro.Yurakucho.Heiwadai","TokyoMetro.Yurakucho.Hikawadai","TokyoMetro.Yurakucho.KotakeMukaihara","TokyoMetro.Yurakucho.Senkawa","TokyoMetro.Yurakucho.Kanamecho","TokyoMetro.Yurakucho.Ikebukuro","TokyoMetro.Yurakucho.HigashiIkebukuro","TokyoMetro.Yurakucho.Gokokuji","TokyoMetro.Yurakucho.Edogawabashi","TokyoMetro.Yurakucho.Iidabashi","TokyoMetro.Yurakucho.Ichigaya","TokyoMetro.Yurakucho.Kojimachi","TokyoMetro.Yurakucho.Nagatacho","TokyoMetro.Yurakucho.Sakuradamon","TokyoMetro.Yurakucho.Yurakucho","TokyoMetro.Yurakucho.GinzaItchome","TokyoMetro.Yurakucho.Shintomicho","TokyoMetro.Yurakucho.Tsukishima","TokyoMetro.Yurakucho.Toyosu","TokyoMetro.Yurakucho.Tatsumi","TokyoMetro.Yurakucho.ShinKiba"],"asc":"신키바방면","desc":"와코시방면","is_loop":false},"TokyoMetro.Hanzomon":{"ko":"한조몬선","en":"Hanzomon Line","color":"#8F76D6","type":"metro","stations":["TokyoMetro.Hanzomon.Shibuya","TokyoMetro.Hanzomon.OmoteSando","TokyoMetro.Hanzomon.AoyamaItchome","TokyoMetro.Hanzomon.Nagatacho","TokyoMetro.Hanzomon.Hanzomon","TokyoMetro.Hanzomon.Kudanshita","TokyoMetro.Hanzomon.Jimbocho","TokyoMetro.Hanzomon.Otemachi","TokyoMetro.Hanzomon.Mitsukoshimae","TokyoMetro.Hanzomon.Suitengumae","TokyoMetro.Hanzomon.KiyosumiShirakawa","TokyoMetro.Hanzomon.Sumiyoshi","TokyoMetro.Hanzomon.Kinshicho","TokyoMetro.Hanzomon.Oshiage"],"asc":"오시아게<스가이트리>방면","desc":"시부야방면","is_loop":false},"TokyoMetro.Namboku":{"ko":"난보쿠선","en":"Namboku Line","color":"#00AC9B","type":"metro","stations":["TokyoMetro.Namboku.Meguro","TokyoMetro.Namboku.Shirokanedai","TokyoMetro.Namboku.ShirokaneTakanawa","TokyoMetro.Namboku.AzabuJuban","TokyoMetro.Namboku.RoppongiItchome","TokyoMetro.Namboku.TameikeSanno","TokyoMetro.Namboku.Nagatacho","TokyoMetro.Namboku.Yotsuya","TokyoMetro.Namboku.Ichigaya","TokyoMetro.Namboku.Iidabashi","TokyoMetro.Namboku.Korakuen","TokyoMetro.Namboku.Todaimae","TokyoMetro.Namboku.HonKomagome","TokyoMetro.Namboku.Komagome","TokyoMetro.Namboku.Nishigahara","TokyoMetro.Namboku.Oji","TokyoMetro.Namboku.OjiKamiya","TokyoMetro.Namboku.Shimo","TokyoMetro.Namboku.AkabaneIwabuchi"],"asc":"아카바네이와부치방면","desc":"메구로방면","is_loop":false},"TokyoMetro.Fukutoshin":{"ko":"후쿠토신선","en":"Fukutoshin Line","color":"#9C5E31","type":"metro","stations":["TokyoMetro.Fukutoshin.Wakoshi","TokyoMetro.Fukutoshin.ChikatetsuNarimasu","TokyoMetro.Fukutoshin.ChikatetsuAkatsuka","TokyoMetro.Fukutoshin.Heiwadai","TokyoMetro.Fukutoshin.Hikawadai","TokyoMetro.Fukutoshin.KotakeMukaihara","TokyoMetro.Fukutoshin.Senkawa","TokyoMetro.Fukutoshin.Kanamecho","TokyoMetro.Fukutoshin.Ikebukuro","TokyoMetro.Fukutoshin.Zoshigaya","TokyoMetro.Fukutoshin.NishiWaseda","TokyoMetro.Fukutoshin.HigashiShinjuku","TokyoMetro.Fukutoshin.ShinjukuSanchome","TokyoMetro.Fukutoshin.KitaSando","TokyoMetro.Fukutoshin.MeijiJingumae","TokyoMetro.Fukutoshin.Shibuya"],"asc":"시부야방면","desc":"와코시방면","is_loop":false},"Toei.Asakusa":{"ko":"아사쿠사 선","en":"Asakusa Line","color":"#DC435F","type":"toei","stations":["Toei.Asakusa.NishiMagome","Toei.Asakusa.Magome","Toei.Asakusa.Nakanobu","Toei.Asakusa.Togoshi","Toei.Asakusa.Gotanda","Toei.Asakusa.Takanawadai","Toei.Asakusa.Sengakuji","Toei.Asakusa.Mita","Toei.Asakusa.Daimon","Toei.Asakusa.Shimbashi","Toei.Asakusa.HigashiGinza","Toei.Asakusa.Takaracho","Toei.Asakusa.Nihombashi","Toei.Asakusa.Ningyocho","Toei.Asakusa.HigashiNihombashi","Toei.Asakusa.Asakusabashi","Toei.Asakusa.Kuramae","Toei.Asakusa.Asakusa","Toei.Asakusa.HonjoAzumabashi","Toei.Asakusa.Oshiage"],"asc":"오시아게방면","desc":"니시마고메방면","is_loop":false},"Toei.Mita":{"ko":"미타 선","en":"Mita Line","color":"#006AB8","type":"toei","stations":["Toei.Mita.Meguro","Toei.Mita.Shirokanedai","Toei.Mita.ShirokaneTakanawa","Toei.Mita.Mita","Toei.Mita.Shibakoen","Toei.Mita.Onarimon","Toei.Mita.Uchisaiwaicho","Toei.Mita.Hibiya","Toei.Mita.Otemachi","Toei.Mita.Jimbocho","Toei.Mita.Suidobashi","Toei.Mita.Kasuga","Toei.Mita.Hakusan","Toei.Mita.Sengoku","Toei.Mita.Sugamo","Toei.Mita.NishiSugamo","Toei.Mita.ShinItabashi","Toei.Mita.ItabashiKuyakushomae","Toei.Mita.Itabashihoncho","Toei.Mita.Motohasunuma","Toei.Mita.ShimuraSakaue","Toei.Mita.ShimuraSanchome","Toei.Mita.Hasune","Toei.Mita.Nishidai","Toei.Mita.Takashimadaira","Toei.Mita.ShinTakashimadaira","Toei.Mita.NishiTakashimadaira"],"asc":"니시타카시마다이라방면","desc":"메구로방면","is_loop":false},"Toei.Shinjuku":{"ko":"신주쿠 선","en":"Shinjuku Line","color":"#B0BF1E","type":"toei","stations":["Toei.Shinjuku.Shinjuku","Toei.Shinjuku.ShinjukuSanchome","Toei.Shinjuku.Akebonobashi","Toei.Shinjuku.Ichigaya","Toei.Shinjuku.Kudanshita","Toei.Shinjuku.Jimbocho","Toei.Shinjuku.Ogawamachi","Toei.Shinjuku.Iwamotocho","Toei.Shinjuku.BakuroYokoyama","Toei.Shinjuku.Hamacho","Toei.Shinjuku.Morishita","Toei.Shinjuku.Kikukawa","Toei.Shinjuku.Sumiyoshi","Toei.Shinjuku.NishiOjima","Toei.Shinjuku.Ojima","Toei.Shinjuku.HigashiOjima","Toei.Shinjuku.Funabori","Toei.Shinjuku.Ichinoe","Toei.Shinjuku.Mizue","Toei.Shinjuku.Shinozaki","Toei.Shinjuku.Motoyawata"],"asc":"모토야와타방면","desc":"신주쿠방면","is_loop":false},"Toei.Oedo":{"ko":"오에도 선","en":"Oedo Line","color":"#CE045B","type":"toei","stations":["Toei.Oedo.Tochomae","Toei.Oedo.ShinjukuNishiguchi","Toei.Oedo.HigashiShinjuku","Toei.Oedo.WakamatsuKawada","Toei.Oedo.UshigomeYanagicho","Toei.Oedo.UshigomeKagurazaka","Toei.Oedo.Iidabashi","Toei.Oedo.Kasuga","Toei.Oedo.HongoSanchome","Toei.Oedo.UenoOkachimachi","Toei.Oedo.ShinOkachimachi","Toei.Oedo.Kuramae","Toei.Oedo.Ryogoku","Toei.Oedo.Morishita","Toei.Oedo.KiyosumiShirakawa","Toei.Oedo.MonzenNakacho","Toei.Oedo.Tsukishima","Toei.Oedo.Kachidoki","Toei.Oedo.Tsukijishijo","Toei.Oedo.Shiodome","Toei.Oedo.Daimon","Toei.Oedo.Akabanebashi","Toei.Oedo.AzabuJuban","Toei.Oedo.Roppongi","Toei.Oedo.AoyamaItchome","Toei.Oedo.KokuritsuKyogijo","Toei.Oedo.Yoyogi","Toei.Oedo.Shinjuku","Toei.Oedo.Tochomae.1","Toei.Oedo.NishiShinjukuGochome","Toei.Oedo.NakanoSakaue","Toei.Oedo.HigashiNakano","Toei.Oedo.Nakai","Toei.Oedo.OchiaiMinamiNagasaki","Toei.Oedo.ShinEgota","Toei.Oedo.Nerima","Toei.Oedo.Toshimaen","Toei.Oedo.NerimaKasugacho","Toei.Oedo.Hikarigaoka"],"asc":"히카리가오카방면","desc":"도초마에방면","is_loop":false},"JR-East.Yamanote":{"ko":"야마노테 선","en":"Yamanote Line","color":"#80C342","type":"jr","stations":["JR-East.Yamanote.Osaki","JR-East.Yamanote.Gotanda","JR-East.Yamanote.Meguro","JR-East.Yamanote.Ebisu","JR-East.Yamanote.Shibuya","JR-East.Yamanote.Harajuku","JR-East.Yamanote.Yoyogi","JR-East.Yamanote.Shinjuku","JR-East.Yamanote.ShinOkubo","JR-East.Yamanote.Takadanobaba","JR-East.Yamanote.Mejiro","JR-East.Yamanote.Ikebukuro","JR-East.Yamanote.Otsuka","JR-East.Yamanote.Sugamo","JR-East.Yamanote.Komagome","JR-East.Yamanote.Tabata","JR-East.Yamanote.NishiNippori","JR-East.Yamanote.Nippori","JR-East.Yamanote.Uguisudani","JR-East.Yamanote.Ueno","JR-East.Yamanote.Okachimachi","JR-East.Yamanote.Akihabara","JR-East.Yamanote.Kanda","JR-East.Yamanote.Tokyo","JR-East.Yamanote.Yurakucho","JR-East.Yamanote.Shimbashi","JR-East.Yamanote.Hamamatsucho","JR-East.Yamanote.Tamachi","JR-East.Yamanote.TakanawaGateway","JR-East.Yamanote.Shinagawa","JR-East.Yamanote.Osaki"],"asc":"외선순환","desc":"내선순환","is_loop":true},"JR-East.ChuoRapid":{"ko":"주오 선 쾌속","en":"Chuo Rapid Line","color":"#F15A22","type":"jr","stations":["JR-East.ChuoRapid.Tokyo","JR-East.ChuoRapid.Kanda","JR-East.ChuoRapid.Ochanomizu","JR-East.ChuoRapid.Yotsuya","JR-East.ChuoRapid.Shinjuku","JR-East.ChuoRapid.Nakano","JR-East.ChuoRapid.Koenji","JR-East.ChuoRapid.Asagaya","JR-East.ChuoRapid.Ogikubo","JR-East.ChuoRapid.NishiOgikubo","JR-East.ChuoRapid.Kichijoji","JR-East.ChuoRapid.Mitaka","JR-East.ChuoRapid.MusashiSakai","JR-East.ChuoRapid.HigashiKoganei","JR-East.ChuoRapid.MusashiKoganei","JR-East.ChuoRapid.Kokubunji","JR-East.ChuoRapid.NishiKokubunji","JR-East.ChuoRapid.Kunitachi","JR-East.ChuoRapid.Tachikawa","JR-East.ChuoRapid.Hino","JR-East.ChuoRapid.Toyoda","JR-East.ChuoRapid.Hachioji","JR-East.ChuoRapid.NishiHachioji","JR-East.ChuoRapid.Takao"],"asc":"다카오방면","desc":"도쿄방면","is_loop":false},"JR-East.ChuoSobuLocal":{"ko":"주오·소부 각역정차","en":"Chuo Sobu Local Line","color":"#FFD400","type":"jr","stations":["JR-East.ChuoSobuLocal.Chiba","JR-East.ChuoSobuLocal.NishiChiba","JR-East.ChuoSobuLocal.Inage","JR-East.ChuoSobuLocal.ShinKemigawa","JR-East.ChuoSobuLocal.Makuhari","JR-East.ChuoSobuLocal.Makuharihongo","JR-East.ChuoSobuLocal.Tsudanuma","JR-East.ChuoSobuLocal.HigashiFunabashi","JR-East.ChuoSobuLocal.Funabashi","JR-East.ChuoSobuLocal.NishiFunabashi","JR-East.ChuoSobuLocal.ShimosaNakayama","JR-East.ChuoSobuLocal.MotoYawata","JR-East.ChuoSobuLocal.Ichikawa","JR-East.ChuoSobuLocal.Koiwa","JR-East.ChuoSobuLocal.ShinKoiwa","JR-East.ChuoSobuLocal.Hirai","JR-East.ChuoSobuLocal.Kameido","JR-East.ChuoSobuLocal.Kinshicho","JR-East.ChuoSobuLocal.Ryogoku","JR-East.ChuoSobuLocal.Asakusabashi","JR-East.ChuoSobuLocal.Akihabara","JR-East.ChuoSobuLocal.Ochanomizu","JR-East.ChuoSobuLocal.Suidobashi","JR-East.ChuoSobuLocal.Iidabashi","JR-East.ChuoSobuLocal.Ichigaya","JR-East.ChuoSobuLocal.Yotsuya","JR-East.ChuoSobuLocal.Shinanomachi","JR-East.ChuoSobuLocal.Sendagaya","JR-East.ChuoSobuLocal.Yoyogi","JR-East.ChuoSobuLocal.Shinjuku","JR-East.ChuoSobuLocal.Okubo","JR-East.ChuoSobuLocal.HigashiNakano","JR-East.ChuoSobuLocal.Nakano","JR-East.ChuoSobuLocal.Koenji","JR-East.ChuoSobuLocal.Asagaya","JR-East.ChuoSobuLocal.Ogikubo","JR-East.ChuoSobuLocal.NishiOgikubo","JR-East.ChuoSobuLocal.Kichijoji","JR-East.ChuoSobuLocal.Mitaka"],"asc":"미타카방면","desc":"지바방면","is_loop":false}};
+const STATIONS={"TokyoMetro.Ginza.Shibuya":{"ko":"시부야","en":"Shibuya","stem":"Shibuya","coord":[139.702445,35.658999],"lines":["TokyoMetro.Ginza"]},"TokyoMetro.Ginza.OmoteSando":{"ko":"오모테산도","en":"Omote-sando","stem":"OmoteSando","coord":[139.712473,35.665042],"lines":["TokyoMetro.Ginza"]},"TokyoMetro.Ginza.Gaiemmae":{"ko":"가이엔마에","en":"Gaiemmae","stem":"Gaiemmae","coord":[139.717825,35.670375],"lines":["TokyoMetro.Ginza"]},"TokyoMetro.Ginza.AoyamaItchome":{"ko":"아오야마잇초메","en":"Aoyama-itchome","stem":"AoyamaItchome","coord":[139.724145,35.67279],"lines":["TokyoMetro.Ginza"]},"TokyoMetro.Ginza.AkasakaMitsuke":{"ko":"아카사카미쓰케","en":"Akasaka-mitsuke","stem":"AkasakaMitsuke","coord":[139.737347,35.676845],"lines":["TokyoMetro.Ginza"]},"TokyoMetro.Ginza.TameikeSanno":{"ko":"다메이케산노","en":"Tameike-sanno","stem":"TameikeSanno","coord":[139.741943,35.671511],"lines":["TokyoMetro.Ginza"]},"TokyoMetro.Ginza.Toranomon":{"ko":"도라노몬","en":"Toranomon","stem":"Toranomon","coord":[139.75012,35.67016],"lines":["TokyoMetro.Ginza"]},"TokyoMetro.Ginza.Shimbashi":{"ko":"신바시","en":"Shimbashi","stem":"Shimbashi","coord":[139.758512,35.667382],"lines":["TokyoMetro.Ginza"]},"TokyoMetro.Ginza.Ginza":{"ko":"긴자","en":"Ginza","stem":"Ginza","coord":[139.765366,35.6715],"lines":["TokyoMetro.Ginza"]},"TokyoMetro.Ginza.Kyobashi":{"ko":"교바시","en":"Kyobashi","stem":"Kyobashi","coord":[139.77011,35.676704],"lines":["TokyoMetro.Ginza"]},"TokyoMetro.Ginza.Nihombashi":{"ko":"니혼바시","en":"Nihombashi","stem":"Nihombashi","coord":[139.773335,35.681879],"lines":["TokyoMetro.Ginza"]},"TokyoMetro.Ginza.Mitsukoshimae":{"ko":"미쓰코시마에","en":"Mitsukoshimae","stem":"Mitsukoshimae","coord":[139.773582,35.687173],"lines":["TokyoMetro.Ginza"]},"TokyoMetro.Ginza.Kanda":{"ko":"간다","en":"Kanda","stem":"Kanda","coord":[139.77089,35.693715],"lines":["TokyoMetro.Ginza"]},"TokyoMetro.Ginza.Suehirocho":{"ko":"수에히로초","en":"Suehirocho","stem":"Suehirocho","coord":[139.771762,35.70278],"lines":["TokyoMetro.Ginza"]},"TokyoMetro.Ginza.UenoHirokoji":{"ko":"우에노히로코지","en":"Ueno-hirokoji","stem":"UenoHirokoji","coord":[139.773011,35.707765],"lines":["TokyoMetro.Ginza"]},"TokyoMetro.Ginza.Ueno":{"ko":"우에노","en":"Ueno","stem":"Ueno","coord":[139.776075,35.711795],"lines":["TokyoMetro.Ginza"]},"TokyoMetro.Ginza.Inaricho":{"ko":"이나리초","en":"Inaricho","stem":"Inaricho","coord":[139.782668,35.711344],"lines":["TokyoMetro.Ginza"]},"TokyoMetro.Ginza.Tawaramachi":{"ko":"다와라마치","en":"Tawaramachi","stem":"Tawaramachi","coord":[139.790775,35.709842],"lines":["TokyoMetro.Ginza"]},"TokyoMetro.Ginza.Asakusa":{"ko":"아사쿠사","en":"Asakusa","stem":"Asakusa","coord":[139.797774,35.710746],"lines":["TokyoMetro.Ginza"]},"TokyoMetro.Marunouchi.Ogikubo":{"ko":"오기쿠보","en":"Ogikubo","stem":"Ogikubo","coord":[139.61976,35.704175],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.MinamiAsagaya":{"ko":"미나미아사가야","en":"Minami-asagaya","stem":"MinamiAsagaya","coord":[139.635575,35.699455],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.ShinKoenji":{"ko":"신코엔지","en":"Shin-koenji","stem":"ShinKoenji","coord":[139.64851,35.69786],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.HigashiKoenji":{"ko":"히가시코엔지","en":"Higashi-koenji","stem":"HigashiKoenji","coord":[139.658295,35.697965],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.ShinNakano":{"ko":"신나카노","en":"Shin-nakano","stem":"ShinNakano","coord":[139.66951,35.697475],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.NakanoSakaue":{"ko":"나카노사카우에","en":"Nakano-sakaue","stem":"NakanoSakaue","coord":[139.682205,35.697085],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.NishiShinjuku":{"ko":"니시신주쿠","en":"Nishi-shinjuku","stem":"NishiShinjuku","coord":[139.69256,35.694515],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.Shinjuku":{"ko":"신주쿠","en":"Shinjuku","stem":"Shinjuku","coord":[139.700548,35.692452],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.ShinjukuSanchome":{"ko":"신주쿠산초메","en":"Shinjuku-sanchome","stem":"ShinjukuSanchome","coord":[139.70421,35.69118],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.ShinjukuGyoemmae":{"ko":"신주쿠교엔마에","en":"Shinjuku-gyoemmae","stem":"ShinjukuGyoemmae","coord":[139.710915,35.688525],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.YotsuyaSanchome":{"ko":"요쓰야산초메","en":"Yotsuya-sanchome","stem":"YotsuyaSanchome","coord":[139.720567,35.687972],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.Yotsuya":{"ko":"요쓰야","en":"Yotsuya","stem":"Yotsuya","coord":[139.72997,35.684548],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.AkasakaMitsuke":{"ko":"아카사카미쓰케","en":"Akasaka-mitsuke","stem":"AkasakaMitsuke","coord":[139.737347,35.676845],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.KokkaiGijidomae":{"ko":"곳카이기지도마에","en":"Kokkai-gijidomae","stem":"KokkaiGijidomae","coord":[139.745568,35.674535],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.Kasumigaseki":{"ko":"가스미가세키","en":"Kasumigaseki","stem":"Kasumigaseki","coord":[139.75268,35.674235],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.Ginza":{"ko":"긴자","en":"Ginza","stem":"Ginza","coord":[139.763181,35.672894],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.Tokyo":{"ko":"도쿄","en":"Tokyo","stem":"Tokyo","coord":[139.7648,35.681935],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.Otemachi":{"ko":"오테마치","en":"Otemachi","stem":"Otemachi","coord":[139.766203,35.686875],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.Awajicho":{"ko":"아와지초","en":"Awajicho","stem":"Awajicho","coord":[139.767455,35.69487],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.Ochanomizu":{"ko":"오차노미즈","en":"Ochanomizu","stem":"Ochanomizu","coord":[139.764026,35.700566],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.HongoSanchome":{"ko":"혼고산초메","en":"Hongo-sanchome","stem":"HongoSanchome","coord":[139.760154,35.706726],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.Korakuen":{"ko":"고라쿠엔","en":"Korakuen","stem":"Korakuen","coord":[139.75125,35.707339],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.Myogadani":{"ko":"묘가다니","en":"Myogadani","stem":"Myogadani","coord":[139.736895,35.7172],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.ShinOtsuka":{"ko":"신오쓰카","en":"Shin-otsuka","stem":"ShinOtsuka","coord":[139.729931,35.725792],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Marunouchi.Ikebukuro":{"ko":"이케부쿠로","en":"Ikebukuro","stem":"Ikebukuro","coord":[139.71115,35.730345],"lines":["TokyoMetro.Marunouchi"]},"TokyoMetro.Hibiya.NakaMeguro":{"ko":"나카메구로","en":"Naka-meguro","stem":"NakaMeguro","coord":[139.699116,35.64431],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Hibiya.Ebisu":{"ko":"에비스","en":"Ebisu","stem":"Ebisu","coord":[139.708701,35.64704],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Hibiya.HiroO":{"ko":"히로오","en":"Hiro-o","stem":"HiroO","coord":[139.722209,35.651499],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Hibiya.Roppongi":{"ko":"롯폰기","en":"Roppongi","stem":"Roppongi","coord":[139.731155,35.6628],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Hibiya.Kamiyacho":{"ko":"가미야초","en":"Kamiyacho","stem":"Kamiyacho","coord":[139.745048,35.662964],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Hibiya.ToranomonHills":{"ko":"도라노몬힐스","en":"Toranomon-hills","stem":"ToranomonHills","coord":[139.747765,35.667469],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Hibiya.Kasumigaseki":{"ko":"가스미가세키","en":"Kasumigaseki","stem":"Kasumigaseki","coord":[139.75106,35.673875],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Hibiya.Hibiya":{"ko":"히비야","en":"Hibiya","stem":"Hibiya","coord":[139.7606,35.674271],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Hibiya.Ginza":{"ko":"긴자","en":"Ginza","stem":"Ginza","coord":[139.764007,35.671983],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Hibiya.HigashiGinza":{"ko":"히가시긴자","en":"Higashi-ginza","stem":"HigashiGinza","coord":[139.767633,35.669129],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Hibiya.Tsukiji":{"ko":"쓰키지","en":"Tsukiji","stem":"Tsukiji","coord":[139.772473,35.667928],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Hibiya.Hatchobori":{"ko":"핫초보리","en":"Hatchobori","stem":"Hatchobori","coord":[139.777334,35.675368],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Hibiya.Kayabacho":{"ko":"가야바초","en":"Kayabacho","stem":"Kayabacho","coord":[139.779619,35.679078],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Hibiya.Ningyocho":{"ko":"닌교초","en":"Ningyocho","stem":"Ningyocho","coord":[139.782339,35.686259],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Hibiya.Kodemmacho":{"ko":"고덴마초","en":"Kodemmacho","stem":"Kodemmacho","coord":[139.778758,35.690423],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Hibiya.Akihabara":{"ko":"아키하바라","en":"Akihabara","stem":"Akihabara","coord":[139.775529,35.697965],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Hibiya.NakaOkachimachi":{"ko":"나카오카치마치","en":"Naka-okachimachi","stem":"NakaOkachimachi","coord":[139.77619,35.706655],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Hibiya.Ueno":{"ko":"우에노","en":"Ueno","stem":"Ueno","coord":[139.777061,35.711558],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Hibiya.Iriya":{"ko":"이리야","en":"Iriya","stem":"Iriya","coord":[139.784466,35.720565],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Hibiya.Minowa":{"ko":"미노와","en":"Minowa","stem":"Minowa","coord":[139.7913,35.72955],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Hibiya.MinamiSenju":{"ko":"미나미센주","en":"Minami-senju","stem":"MinamiSenju","coord":[139.79878,35.73231],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Hibiya.KitaSenju":{"ko":"기타센주","en":"Kita-senju","stem":"KitaSenju","coord":[139.80556,35.74981],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Hibiya.ShinKoshigaya":{"ko":"신코시가야","en":"Shin-koshigaya","stem":"ShinKoshigaya","coord":[139.78981,35.87556],"lines":["TokyoMetro.Hibiya"]},"TokyoMetro.Tozai.Nakano":{"ko":"나카노","en":"Nakano","stem":"Nakano","coord":[139.66594,35.70573],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Tozai.Ochiai":{"ko":"오치아이","en":"Ochiai","stem":"Ochiai","coord":[139.685965,35.710635],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Tozai.Takadanobaba":{"ko":"다카다노바바","en":"Takadanobaba","stem":"Takadanobaba","coord":[139.705045,35.71328],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Tozai.Waseda":{"ko":"와세다","en":"Waseda","stem":"Waseda","coord":[139.721191,35.705803],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Tozai.Kagurazaka":{"ko":"가구라자카","en":"Kagurazaka","stem":"Kagurazaka","coord":[139.73452,35.703865],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Tozai.Iidabashi":{"ko":"이다바시","en":"Iidabashi","stem":"Iidabashi","coord":[139.746521,35.701403],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Tozai.Kudanshita":{"ko":"구단시타","en":"Kudanshita","stem":"Kudanshita","coord":[139.751265,35.696091],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Tozai.Takebashi":{"ko":"다케바시","en":"Takebashi","stem":"Takebashi","coord":[139.75767,35.69044],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Tozai.Otemachi":{"ko":"오테마치","en":"Otemachi","stem":"Otemachi","coord":[139.76603,35.684697],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Tozai.Nihombashi":{"ko":"니혼바시","en":"Nihombashi","stem":"Nihombashi","coord":[139.774101,35.682376],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Tozai.Kayabacho":{"ko":"가야바초","en":"Kayabacho","stem":"Kayabacho","coord":[139.77927,35.680346],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Tozai.MonzenNakacho":{"ko":"몬젠나카초","en":"Monzen-nakacho","stem":"MonzenNakacho","coord":[139.796099,35.671892],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Tozai.Kiba":{"ko":"기바","en":"Kiba","stem":"Kiba","coord":[139.807115,35.669356],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Tozai.Toyocho":{"ko":"도요초","en":"Toyocho","stem":"Toyocho","coord":[139.81768,35.66959],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Tozai.MinamiSunamachi":{"ko":"미나미스나마치","en":"Minami-sunamachi","stem":"MinamiSunamachi","coord":[139.831695,35.668415],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Tozai.NishiKasai":{"ko":"니시카사이","en":"Nishi-kasai","stem":"NishiKasai","coord":[139.8596,35.664562],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Tozai.Kasai":{"ko":"가사이","en":"Kasai","stem":"Kasai","coord":[139.87253,35.663616],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Tozai.Urayasu":{"ko":"우라야스","en":"Urayasu","stem":"Urayasu","coord":[139.893236,35.665903],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Tozai.MinamiGyotoku":{"ko":"미나미교토쿠","en":"Minami-gyotoku","stem":"MinamiGyotoku","coord":[139.902276,35.672729],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Tozai.Gyotoku":{"ko":"교토쿠","en":"Gyotoku","stem":"Gyotoku","coord":[139.914185,35.68262],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Tozai.Myoden":{"ko":"묘덴","en":"Myoden","stem":"Myoden","coord":[139.924286,35.691014],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Tozai.BarakiNakayama":{"ko":"바라키나카야마","en":"Baraki-nakayama","stem":"BarakiNakayama","coord":[139.941915,35.7033],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Tozai.NishiFunabashi":{"ko":"니시후나바시","en":"Nishi-funabashi","stem":"NishiFunabashi","coord":[139.95925,35.70713],"lines":["TokyoMetro.Tozai"]},"TokyoMetro.Chiyoda.Machida":{"ko":"마치다","en":"Machida","stem":"Machida","coord":[139.44517,35.54394],"lines":["TokyoMetro.Chiyoda"]},"TokyoMetro.Chiyoda.SeijogakuenMae":{"ko":"세이조가쿠엔마에","en":"Seijogakuen-Mae","stem":"SeijogakuenMae","coord":[139.59916,35.64015],"lines":["TokyoMetro.Chiyoda"]},"TokyoMetro.Chiyoda.YoyogiUehara":{"ko":"요요기우에하라","en":"Yoyogi-uehara","stem":"YoyogiUehara","coord":[139.67968,35.66906],"lines":["TokyoMetro.Chiyoda"]},"TokyoMetro.Chiyoda.YoyogiKoen":{"ko":"요요기코엔","en":"Yoyogi-koen","stem":"YoyogiKoen","coord":[139.689791,35.669104],"lines":["TokyoMetro.Chiyoda"]},"TokyoMetro.Chiyoda.MeijiJingumae":{"ko":"메이지진구마에<하라주쿠>","en":"Meiji-jingumae<Harajuku>","stem":"MeijiJingumae","coord":[139.703944,35.669123],"lines":["TokyoMetro.Chiyoda"]},"TokyoMetro.Chiyoda.OmoteSando":{"ko":"오모테산도","en":"Omote-sando","stem":"OmoteSando","coord":[139.711346,35.665652],"lines":["TokyoMetro.Chiyoda"]},"TokyoMetro.Chiyoda.Nogizaka":{"ko":"노기자카","en":"Nogizaka","stem":"Nogizaka","coord":[139.726229,35.666592],"lines":["TokyoMetro.Chiyoda"]},"TokyoMetro.Chiyoda.Akasaka":{"ko":"아카사카","en":"Akasaka","stem":"Akasaka","coord":[139.736413,35.672104],"lines":["TokyoMetro.Chiyoda"]},"TokyoMetro.Chiyoda.KokkaiGijidomae":{"ko":"곳카이기지도마에","en":"Kokkai-gijidomae","stem":"KokkaiGijidomae","coord":[139.743188,35.673566],"lines":["TokyoMetro.Chiyoda"]},"TokyoMetro.Chiyoda.Kasumigaseki":{"ko":"가스미가세키","en":"Kasumigaseki","stem":"Kasumigaseki","coord":[139.75177,35.67256],"lines":["TokyoMetro.Chiyoda"]},"TokyoMetro.Chiyoda.Hibiya":{"ko":"히비야","en":"Hibiya","stem":"Hibiya","coord":[139.758765,35.673955],"lines":["TokyoMetro.Chiyoda"]},"TokyoMetro.Chiyoda.Nijubashimae":{"ko":"니주바시마에<마루노우치선>","en":"Nijubashimae<Marunouchi>","stem":"Nijubashimae","coord":[139.76178,35.680505],"lines":["TokyoMetro.Chiyoda"]},"TokyoMetro.Chiyoda.Otemachi":{"ko":"오테마치","en":"Otemachi","stem":"Otemachi","coord":[139.763285,35.68525],"lines":["TokyoMetro.Chiyoda"]},"TokyoMetro.Chiyoda.ShinOchanomizu":{"ko":"신오차노미즈","en":"Shin-ochanomizu","stem":"ShinOchanomizu","coord":[139.76545,35.696925],"lines":["TokyoMetro.Chiyoda"]},"TokyoMetro.Chiyoda.Yushima":{"ko":"유시마","en":"Yushima","stem":"Yushima","coord":[139.769981,35.706805],"lines":["TokyoMetro.Chiyoda"]},"TokyoMetro.Chiyoda.Nezu":{"ko":"네즈","en":"Nezu","stem":"Nezu","coord":[139.76575,35.717325],"lines":["TokyoMetro.Chiyoda"]},"TokyoMetro.Chiyoda.Sendagi":{"ko":"센다기","en":"Sendagi","stem":"Sendagi","coord":[139.763303,35.725746],"lines":["TokyoMetro.Chiyoda"]},"TokyoMetro.Chiyoda.NishiNippori":{"ko":"니시닛포리","en":"Nishi-nippori","stem":"NishiNippori","coord":[139.76689,35.732355],"lines":["TokyoMetro.Chiyoda"]},"TokyoMetro.Chiyoda.Machiya":{"ko":"마치야","en":"Machiya","stem":"Machiya","coord":[139.780047,35.742068],"lines":["TokyoMetro.Chiyoda"]},"TokyoMetro.Chiyoda.KitaSenju":{"ko":"기타센주","en":"Kita-senju","stem":"KitaSenju","coord":[139.804403,35.7492],"lines":["TokyoMetro.Chiyoda"]},"TokyoMetro.Chiyoda.Ayase":{"ko":"아야세","en":"Ayase","stem":"Ayase","coord":[139.82481,35.76212],"lines":["TokyoMetro.Chiyoda"]},"TokyoMetro.Chiyoda.KitaAyase":{"ko":"기타아야세","en":"Kita-ayase","stem":"KitaAyase","coord":[139.832095,35.77689],"lines":["TokyoMetro.Chiyoda"]},"TokyoMetro.Yurakucho.Wakoshi":{"ko":"와코시","en":"Wakoshi","stem":"Wakoshi","coord":[139.61286,35.78835],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.ChikatetsuNarimasu":{"ko":"지카테쓰나리마스","en":"Chikatetsu-narimasu","stem":"ChikatetsuNarimasu","coord":[139.63117,35.77674],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.ChikatetsuAkatsuka":{"ko":"지카테쓰아카쓰카","en":"Chikatetsu-akatsuka","stem":"ChikatetsuAkatsuka","coord":[139.644,35.769981],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.Heiwadai":{"ko":"헤이와다이","en":"Heiwadai","stem":"Heiwadai","coord":[139.6543,35.757555],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.Hikawadai":{"ko":"히카와다이","en":"Hikawadai","stem":"Hikawadai","coord":[139.66547,35.74962],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.KotakeMukaihara":{"ko":"고타케무카이하라","en":"Kotake-mukaihara","stem":"KotakeMukaihara","coord":[139.67952,35.743395],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.Senkawa":{"ko":"센카와","en":"Senkawa","stem":"Senkawa","coord":[139.6894,35.738175],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.Kanamecho":{"ko":"가나메초","en":"Kanamecho","stem":"Kanamecho","coord":[139.69848,35.733215],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.Ikebukuro":{"ko":"이케부쿠로","en":"Ikebukuro","stem":"Ikebukuro","coord":[139.710885,35.729185],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.HigashiIkebukuro":{"ko":"히가시이케부쿠로","en":"Higashi-ikebukuro","stem":"HigashiIkebukuro","coord":[139.718865,35.72595],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.Gokokuji":{"ko":"고코쿠지","en":"Gokokuji","stem":"Gokokuji","coord":[139.72745,35.71918],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.Edogawabashi":{"ko":"에도가와바시","en":"Edogawabashi","stem":"Edogawabashi","coord":[139.733574,35.709537],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.Iidabashi":{"ko":"이다바시","en":"Iidabashi","stem":"Iidabashi","coord":[139.743207,35.701342],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.Ichigaya":{"ko":"이치가야","en":"Ichigaya","stem":"Ichigaya","coord":[139.736891,35.692576],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.Kojimachi":{"ko":"고지마치","en":"Kojimachi","stem":"Kojimachi","coord":[139.73735,35.684785],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.Nagatacho":{"ko":"나가타초","en":"Nagatacho","stem":"Nagatacho","coord":[139.741773,35.677895],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.Sakuradamon":{"ko":"사쿠라다몬","en":"Sakuradamon","stem":"Sakuradamon","coord":[139.751886,35.677459],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.Yurakucho":{"ko":"유라쿠초","en":"Yurakucho","stem":"Yurakucho","coord":[139.762286,35.675973],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.GinzaItchome":{"ko":"긴자잇초메","en":"Ginza-itchome","stem":"GinzaItchome","coord":[139.766786,35.674519],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.Shintomicho":{"ko":"신토미초","en":"Shintomicho","stem":"Shintomicho","coord":[139.773594,35.670529],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.Tsukishima":{"ko":"쓰키시마","en":"Tsukishima","stem":"Tsukishima","coord":[139.784405,35.664711],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.Toyosu":{"ko":"도요스","en":"Toyosu","stem":"Toyosu","coord":[139.795994,35.655153],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.Tatsumi":{"ko":"다쓰미","en":"Tatsumi","stem":"Tatsumi","coord":[139.81033,35.645775],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Yurakucho.ShinKiba":{"ko":"신키바","en":"Shin-kiba","stem":"ShinKiba","coord":[139.826605,35.64578],"lines":["TokyoMetro.Yurakucho"]},"TokyoMetro.Hanzomon.Shibuya":{"ko":"시부야","en":"Shibuya","stem":"Shibuya","coord":[139.701035,35.65945],"lines":["TokyoMetro.Hanzomon"]},"TokyoMetro.Hanzomon.OmoteSando":{"ko":"오모테산도","en":"Omote-sando","stem":"OmoteSando","coord":[139.712473,35.665042],"lines":["TokyoMetro.Hanzomon"]},"TokyoMetro.Hanzomon.AoyamaItchome":{"ko":"아오야마잇초메","en":"Aoyama-itchome","stem":"AoyamaItchome","coord":[139.724145,35.67279],"lines":["TokyoMetro.Hanzomon"]},"TokyoMetro.Hanzomon.Nagatacho":{"ko":"나가타초","en":"Nagatacho","stem":"Nagatacho","coord":[139.738865,35.678407],"lines":["TokyoMetro.Hanzomon"]},"TokyoMetro.Hanzomon.Hanzomon":{"ko":"한조몬","en":"Hanzomon","stem":"Hanzomon","coord":[139.741695,35.68538],"lines":["TokyoMetro.Hanzomon"]},"TokyoMetro.Hanzomon.Kudanshita":{"ko":"구단시타","en":"Kudanshita","stem":"Kudanshita","coord":[139.751117,35.695501],"lines":["TokyoMetro.Hanzomon"]},"TokyoMetro.Hanzomon.Jimbocho":{"ko":"진보초","en":"Jimbocho","stem":"Jimbocho","coord":[139.75756,35.696021],"lines":["TokyoMetro.Hanzomon"]},"TokyoMetro.Hanzomon.Otemachi":{"ko":"오테마치","en":"Otemachi","stem":"Otemachi","coord":[139.764905,35.686745],"lines":["TokyoMetro.Hanzomon"]},"TokyoMetro.Hanzomon.Mitsukoshimae":{"ko":"미쓰코시마에","en":"Mitsukoshimae","stem":"Mitsukoshimae","coord":[139.77308,35.684928],"lines":["TokyoMetro.Hanzomon"]},"TokyoMetro.Hanzomon.Suitengumae":{"ko":"스이텐구마에","en":"Suitengumae","stem":"Suitengumae","coord":[139.785171,35.683],"lines":["TokyoMetro.Hanzomon"]},"TokyoMetro.Hanzomon.KiyosumiShirakawa":{"ko":"기요스미시라카와","en":"Kiyosumi-shirakawa","stem":"KiyosumiShirakawa","coord":[139.799841,35.682119],"lines":["TokyoMetro.Hanzomon"]},"TokyoMetro.Hanzomon.Sumiyoshi":{"ko":"수미요시","en":"Sumiyoshi","stem":"Sumiyoshi","coord":[139.815667,35.688704],"lines":["TokyoMetro.Hanzomon"]},"TokyoMetro.Hanzomon.Kinshicho":{"ko":"긴시초","en":"Kinshicho","stem":"Kinshicho","coord":[139.814957,35.697441],"lines":["TokyoMetro.Hanzomon"]},"TokyoMetro.Hanzomon.Oshiage":{"ko":"오시아게<스가이트리>","en":"Oshiage<SKYTREE>","stem":"Oshiage","coord":[139.813735,35.708467],"lines":["TokyoMetro.Hanzomon"]},"TokyoMetro.Namboku.Meguro":{"ko":"메구로","en":"Meguro","stem":"Meguro","coord":[139.715456,35.63297],"lines":["TokyoMetro.Namboku"]},"TokyoMetro.Namboku.Shirokanedai":{"ko":"시로카네다이","en":"Shirokanedai","stem":"Shirokanedai","coord":[139.726007,35.637851],"lines":["TokyoMetro.Namboku"]},"TokyoMetro.Namboku.ShirokaneTakanawa":{"ko":"시로카네타카나와","en":"Shirokane-takanawa","stem":"ShirokaneTakanawa","coord":[139.734344,35.643283],"lines":["TokyoMetro.Namboku"]},"TokyoMetro.Namboku.AzabuJuban":{"ko":"아자부주반","en":"Azabu-juban","stem":"AzabuJuban","coord":[139.737045,35.65481],"lines":["TokyoMetro.Namboku"]},"TokyoMetro.Namboku.RoppongiItchome":{"ko":"롯폰기잇초메","en":"Roppongi-itchome","stem":"RoppongiItchome","coord":[139.7389,35.665075],"lines":["TokyoMetro.Namboku"]},"TokyoMetro.Namboku.TameikeSanno":{"ko":"다메이케산노","en":"Tameike-sanno","stem":"TameikeSanno","coord":[139.741294,35.673091],"lines":["TokyoMetro.Namboku"]},"TokyoMetro.Namboku.Nagatacho":{"ko":"나가타초","en":"Nagatacho","stem":"Nagatacho","coord":[139.739288,35.678338],"lines":["TokyoMetro.Namboku"]},"TokyoMetro.Namboku.Yotsuya":{"ko":"요쓰야","en":"Yotsuya","stem":"Yotsuya","coord":[139.72968,35.686082],"lines":["TokyoMetro.Namboku"]},"TokyoMetro.Namboku.Ichigaya":{"ko":"이치가야","en":"Ichigaya","stem":"Ichigaya","coord":[139.736324,35.692894],"lines":["TokyoMetro.Namboku"]},"TokyoMetro.Namboku.Iidabashi":{"ko":"이다바시","en":"Iidabashi","stem":"Iidabashi","coord":[139.743716,35.701532],"lines":["TokyoMetro.Namboku"]},"TokyoMetro.Namboku.Korakuen":{"ko":"고라쿠엔","en":"Korakuen","stem":"Korakuen","coord":[139.751786,35.70839],"lines":["TokyoMetro.Namboku"]},"TokyoMetro.Namboku.Todaimae":{"ko":"도다이마에","en":"Todaimae","stem":"Todaimae","coord":[139.75788,35.718014],"lines":["TokyoMetro.Namboku"]},"TokyoMetro.Namboku.HonKomagome":{"ko":"혼고마고메","en":"Hon-komagome","stem":"HonKomagome","coord":[139.753812,35.724365],"lines":["TokyoMetro.Namboku"]},"TokyoMetro.Namboku.Komagome":{"ko":"고마고메","en":"Komagome","stem":"Komagome","coord":[139.746909,35.735913],"lines":["TokyoMetro.Namboku"]},"TokyoMetro.Namboku.Nishigahara":{"ko":"니시가하라","en":"Nishigahara","stem":"Nishigahara","coord":[139.74226,35.745945],"lines":["TokyoMetro.Namboku"]},"TokyoMetro.Namboku.Oji":{"ko":"오지","en":"Oji","stem":"Oji","coord":[139.737362,35.75447],"lines":["TokyoMetro.Namboku"]},"TokyoMetro.Namboku.OjiKamiya":{"ko":"오지카미야","en":"Oji-kamiya","stem":"OjiKamiya","coord":[139.735641,35.765292],"lines":["TokyoMetro.Namboku"]},"TokyoMetro.Namboku.Shimo":{"ko":"시모","en":"Shimo","stem":"Shimo","coord":[139.7325,35.778025],"lines":["TokyoMetro.Namboku"]},"TokyoMetro.Namboku.AkabaneIwabuchi":{"ko":"아카바네이와부치","en":"Akabane-iwabuchi","stem":"AkabaneIwabuchi","coord":[139.72211,35.783355],"lines":["TokyoMetro.Namboku"]},"TokyoMetro.Fukutoshin.Wakoshi":{"ko":"와코시","en":"Wakoshi","stem":"Wakoshi","coord":[139.61286,35.78835],"lines":["TokyoMetro.Fukutoshin"]},"TokyoMetro.Fukutoshin.ChikatetsuNarimasu":{"ko":"지카테쓰나리마스","en":"Chikatetsu-narimasu","stem":"ChikatetsuNarimasu","coord":[139.63117,35.77674],"lines":["TokyoMetro.Fukutoshin"]},"TokyoMetro.Fukutoshin.ChikatetsuAkatsuka":{"ko":"지카테쓰아카쓰카","en":"Chikatetsu-akatsuka","stem":"ChikatetsuAkatsuka","coord":[139.644001,35.76998],"lines":["TokyoMetro.Fukutoshin"]},"TokyoMetro.Fukutoshin.Heiwadai":{"ko":"헤이와다이","en":"Heiwadai","stem":"Heiwadai","coord":[139.6543,35.757555],"lines":["TokyoMetro.Fukutoshin"]},"TokyoMetro.Fukutoshin.Hikawadai":{"ko":"히카와다이","en":"Hikawadai","stem":"Hikawadai","coord":[139.66547,35.74962],"lines":["TokyoMetro.Fukutoshin"]},"TokyoMetro.Fukutoshin.KotakeMukaihara":{"ko":"고타케무카이하라","en":"Kotake-mukaihara","stem":"KotakeMukaihara","coord":[139.67952,35.743395],"lines":["TokyoMetro.Fukutoshin"]},"TokyoMetro.Fukutoshin.Senkawa":{"ko":"센카와","en":"Senkawa","stem":"Senkawa","coord":[139.6894,35.738175],"lines":["TokyoMetro.Fukutoshin"]},"TokyoMetro.Fukutoshin.Kanamecho":{"ko":"가나메초","en":"Kanamecho","stem":"Kanamecho","coord":[139.69848,35.733215],"lines":["TokyoMetro.Fukutoshin"]},"TokyoMetro.Fukutoshin.Ikebukuro":{"ko":"이케부쿠로","en":"Ikebukuro","stem":"Ikebukuro","coord":[139.708944,35.731142],"lines":["TokyoMetro.Fukutoshin"]},"TokyoMetro.Fukutoshin.Zoshigaya":{"ko":"조시가야","en":"Zoshigaya","stem":"Zoshigaya","coord":[139.714715,35.7202],"lines":["TokyoMetro.Fukutoshin"]},"TokyoMetro.Fukutoshin.NishiWaseda":{"ko":"니시와세다","en":"Nishi-waseda","stem":"NishiWaseda","coord":[139.70912,35.707806],"lines":["TokyoMetro.Fukutoshin"]},"TokyoMetro.Fukutoshin.HigashiShinjuku":{"ko":"히가시신주쿠","en":"Higashi-shinjuku","stem":"HigashiShinjuku","coord":[139.707846,35.699829],"lines":["TokyoMetro.Fukutoshin"]},"TokyoMetro.Fukutoshin.ShinjukuSanchome":{"ko":"신주쿠산초메","en":"Shinjuku-sanchome","stem":"ShinjukuSanchome","coord":[139.704727,35.690609],"lines":["TokyoMetro.Fukutoshin"]},"TokyoMetro.Fukutoshin.KitaSando":{"ko":"기타산도","en":"Kita-sando","stem":"KitaSando","coord":[139.705469,35.678503],"lines":["TokyoMetro.Fukutoshin"]},"TokyoMetro.Fukutoshin.MeijiJingumae":{"ko":"메이지진구마에<하라주쿠>","en":"Meiji-jingumae<Harajuku>","stem":"MeijiJingumae","coord":[139.70524,35.668205],"lines":["TokyoMetro.Fukutoshin"]},"TokyoMetro.Fukutoshin.Shibuya":{"ko":"시부야","en":"Shibuya","stem":"Shibuya","coord":[139.70257,35.659092],"lines":["TokyoMetro.Fukutoshin"]},"Toei.Asakusa.NishiMagome":{"ko":"니시마고메","en":"Nishi-magome","stem":"NishiMagome","coord":[139.706086,35.58705],"lines":["Toei.Asakusa"]},"Toei.Asakusa.Magome":{"ko":"마고메","en":"Magome","stem":"Magome","coord":[139.711884,35.596773],"lines":["Toei.Asakusa"]},"Toei.Asakusa.Nakanobu":{"ko":"나카노부","en":"Nakanobu","stem":"Nakanobu","coord":[139.713645,35.605274],"lines":["Toei.Asakusa"]},"Toei.Asakusa.Togoshi":{"ko":"도고시","en":"Togoshi","stem":"Togoshi","coord":[139.716315,35.614421],"lines":["Toei.Asakusa"]},"Toei.Asakusa.Gotanda":{"ko":"고탄다","en":"Gotanda","stem":"Gotanda","coord":[139.723965,35.626878],"lines":["Toei.Asakusa"]},"Toei.Asakusa.Takanawadai":{"ko":"다카나와다이","en":"Takanawadai","stem":"Takanawadai","coord":[139.730384,35.631751],"lines":["Toei.Asakusa"]},"Toei.Asakusa.Sengakuji":{"ko":"센가쿠지","en":"Sengakuji","stem":"Sengakuji","coord":[139.739993,35.638715],"lines":["Toei.Asakusa"]},"Toei.Asakusa.Mita":{"ko":"미타","en":"Mita","stem":"Mita","coord":[139.746877,35.646749],"lines":["Toei.Asakusa"]},"Toei.Asakusa.Daimon":{"ko":"다이몬","en":"Daimon","stem":"Daimon","coord":[139.754679,35.65687],"lines":["Toei.Asakusa"]},"Toei.Asakusa.Shimbashi":{"ko":"신바시","en":"Shimbashi","stem":"Shimbashi","coord":[139.759338,35.665386],"lines":["Toei.Asakusa"]},"Toei.Asakusa.HigashiGinza":{"ko":"히가시긴자","en":"Higashi-ginza","stem":"HigashiGinza","coord":[139.76735,35.669915],"lines":["Toei.Asakusa"]},"Toei.Asakusa.Takaracho":{"ko":"다카라초","en":"Takaracho","stem":"Takaracho","coord":[139.771966,35.675606],"lines":["Toei.Asakusa"]},"Toei.Asakusa.Nihombashi":{"ko":"니혼바시","en":"Nihombashi","stem":"Nihombashi","coord":[139.775814,35.681796],"lines":["Toei.Asakusa"]},"Toei.Asakusa.Ningyocho":{"ko":"닌교초","en":"Ningyocho","stem":"Ningyocho","coord":[139.782276,35.686345],"lines":["Toei.Asakusa"]},"Toei.Asakusa.HigashiNihombashi":{"ko":"히가시니혼바시","en":"Higashi-nihombashi","stem":"HigashiNihombashi","coord":[139.784886,35.692123],"lines":["Toei.Asakusa"]},"Toei.Asakusa.Asakusabashi":{"ko":"아사쿠사바시","en":"Asakusabashi","stem":"Asakusabashi","coord":[139.786335,35.697494],"lines":["Toei.Asakusa"]},"Toei.Asakusa.Kuramae":{"ko":"구라마에","en":"Kuramae","stem":"Kuramae","coord":[139.790858,35.703128],"lines":["Toei.Asakusa"]},"Toei.Asakusa.Asakusa":{"ko":"아사쿠사","en":"Asakusa","stem":"Asakusa","coord":[139.796542,35.70892],"lines":["Toei.Asakusa"]},"Toei.Asakusa.HonjoAzumabashi":{"ko":"혼조아즈마바시","en":"Honjo-azumabashi","stem":"HonjoAzumabashi","coord":[139.804397,35.708565],"lines":["Toei.Asakusa"]},"Toei.Asakusa.Oshiage":{"ko":"오시아게","en":"Oshiage","stem":"Oshiage","coord":[139.812993,35.710824],"lines":["Toei.Asakusa"]},"Toei.Mita.Meguro":{"ko":"메구로","en":"Meguro","stem":"Meguro","coord":[139.715456,35.63297],"lines":["Toei.Mita"]},"Toei.Mita.Shirokanedai":{"ko":"시로카네다이","en":"Shirokanedai","stem":"Shirokanedai","coord":[139.726007,35.637851],"lines":["Toei.Mita"]},"Toei.Mita.ShirokaneTakanawa":{"ko":"시로카네타카나와","en":"Shirokane-takanawa","stem":"ShirokaneTakanawa","coord":[139.734344,35.643283],"lines":["Toei.Mita"]},"Toei.Mita.Mita":{"ko":"미타","en":"Mita","stem":"Mita","coord":[139.748998,35.64865],"lines":["Toei.Mita"]},"Toei.Mita.Shibakoen":{"ko":"시바코엔","en":"Shibakoen","stem":"Shibakoen","coord":[139.74985,35.654186],"lines":["Toei.Mita"]},"Toei.Mita.Onarimon":{"ko":"오나리몬","en":"Onarimon","stem":"Onarimon","coord":[139.751366,35.660774],"lines":["Toei.Mita"]},"Toei.Mita.Uchisaiwaicho":{"ko":"우치사이와이초","en":"Uchisaiwaicho","stem":"Uchisaiwaicho","coord":[139.75533,35.669344],"lines":["Toei.Mita"]},"Toei.Mita.Hibiya":{"ko":"히비야","en":"Hibiya","stem":"Hibiya","coord":[139.760274,35.676585],"lines":["Toei.Mita"]},"Toei.Mita.Otemachi":{"ko":"오테마치","en":"Otemachi","stem":"Otemachi","coord":[139.762798,35.684093],"lines":["Toei.Mita"]},"Toei.Mita.Jimbocho":{"ko":"진보초","en":"Jimbocho","stem":"Jimbocho","coord":[139.758213,35.695331],"lines":["Toei.Mita"]},"Toei.Mita.Suidobashi":{"ko":"스이도바시","en":"Suidobashi","stem":"Suidobashi","coord":[139.755147,35.70346],"lines":["Toei.Mita"]},"Toei.Mita.Kasuga":{"ko":"가스가","en":"Kasuga","stem":"Kasuga","coord":[139.753287,35.709532],"lines":["Toei.Mita"]},"Toei.Mita.Hakusan":{"ko":"하쿠산","en":"Hakusan","stem":"Hakusan","coord":[139.752134,35.721682],"lines":["Toei.Mita"]},"Toei.Mita.Sengoku":{"ko":"센고쿠","en":"Sengoku","stem":"Sengoku","coord":[139.744984,35.727772],"lines":["Toei.Mita"]},"Toei.Mita.Sugamo":{"ko":"스가모","en":"Sugamo","stem":"Sugamo","coord":[139.738154,35.733793],"lines":["Toei.Mita"]},"Toei.Mita.NishiSugamo":{"ko":"니시스가모","en":"Nishi-sugamo","stem":"NishiSugamo","coord":[139.728703,35.743568],"lines":["Toei.Mita"]},"Toei.Mita.ShinItabashi":{"ko":"신이타바시","en":"Shin-itabashi","stem":"ShinItabashi","coord":[139.719808,35.748772],"lines":["Toei.Mita"]},"Toei.Mita.ItabashiKuyakushomae":{"ko":"이타바시쿠야쿠쇼마에","en":"Itabashi-kuyakushomae","stem":"ItabashiKuyakushomae","coord":[139.71012,35.751372],"lines":["Toei.Mita"]},"Toei.Mita.Itabashihoncho":{"ko":"이타바시혼초","en":"Itabashihoncho","stem":"Itabashihoncho","coord":[139.705544,35.761309],"lines":["Toei.Mita"]},"Toei.Mita.Motohasunuma":{"ko":"모토하스누마","en":"Motohasunuma","stem":"Motohasunuma","coord":[139.70241,35.768566],"lines":["Toei.Mita"]},"Toei.Mita.ShimuraSakaue":{"ko":"시무라사카우에","en":"Shimura-sakaue","stem":"ShimuraSakaue","coord":[139.695097,35.776082],"lines":["Toei.Mita"]},"Toei.Mita.ShimuraSanchome":{"ko":"시무라 3초메","en":"Shimura-sanchome","stem":"ShimuraSanchome","coord":[139.685751,35.777468],"lines":["Toei.Mita"]},"Toei.Mita.Hasune":{"ko":"하스네","en":"Hasune","stem":"Hasune","coord":[139.678947,35.784262],"lines":["Toei.Mita"]},"Toei.Mita.Nishidai":{"ko":"니시다이","en":"Nishidai","stem":"Nishidai","coord":[139.672867,35.787074],"lines":["Toei.Mita"]},"Toei.Mita.Takashimadaira":{"ko":"다카시마다이라","en":"Takashimadaira","stem":"Takashimadaira","coord":[139.661361,35.788908],"lines":["Toei.Mita"]},"Toei.Mita.ShinTakashimadaira":{"ko":"신타카시마다이라","en":"Shin-takashimadaira","stem":"ShinTakashimadaira","coord":[139.65405,35.790289],"lines":["Toei.Mita"]},"Toei.Mita.NishiTakashimadaira":{"ko":"니시타카시마다이라","en":"Nishi-takashimadaira","stem":"NishiTakashimadaira","coord":[139.645421,35.791965],"lines":["Toei.Mita"]},"Toei.Shinjuku.Shinjuku":{"ko":"신주쿠","en":"Shinjuku","stem":"Shinjuku","coord":[139.698418,35.688433],"lines":["Toei.Shinjuku"]},"Toei.Shinjuku.ShinjukuSanchome":{"ko":"신주쿠 3초메","en":"Shinjuku-sanchome","stem":"ShinjukuSanchome","coord":[139.706794,35.691016],"lines":["Toei.Shinjuku"]},"Toei.Shinjuku.Akebonobashi":{"ko":"아케보노바시","en":"Akebonobashi","stem":"Akebonobashi","coord":[139.722317,35.692402],"lines":["Toei.Shinjuku"]},"Toei.Shinjuku.Ichigaya":{"ko":"이치가야","en":"Ichigaya","stem":"Ichigaya","coord":[139.737588,35.69153],"lines":["Toei.Shinjuku"]},"Toei.Shinjuku.Kudanshita":{"ko":"구단시타","en":"Kudanshita","stem":"Kudanshita","coord":[139.751738,35.695546],"lines":["Toei.Shinjuku"]},"Toei.Shinjuku.Jimbocho":{"ko":"진보초","en":"Jimbocho","stem":"Jimbocho","coord":[139.757981,35.695972],"lines":["Toei.Shinjuku"]},"Toei.Shinjuku.Ogawamachi":{"ko":"오가와마치","en":"Ogawamachi","stem":"Ogawamachi","coord":[139.766449,35.695005],"lines":["Toei.Shinjuku"]},"Toei.Shinjuku.Iwamotocho":{"ko":"이와모토초","en":"Iwamotocho","stem":"Iwamotocho","coord":[139.775115,35.695607],"lines":["Toei.Shinjuku"]},"Toei.Shinjuku.BakuroYokoyama":{"ko":"바쿠로요코야마","en":"Bakuro-yokoyama","stem":"BakuroYokoyama","coord":[139.783006,35.69193],"lines":["Toei.Shinjuku"]},"Toei.Shinjuku.Hamacho":{"ko":"하마초","en":"Hamacho","stem":"Hamacho","coord":[139.787725,35.688601],"lines":["Toei.Shinjuku"]},"Toei.Shinjuku.Morishita":{"ko":"모리시타","en":"Morishita","stem":"Morishita","coord":[139.796623,35.687982],"lines":["Toei.Shinjuku"]},"Toei.Shinjuku.Kikukawa":{"ko":"기쿠카와","en":"Kikukawa","stem":"Kikukawa","coord":[139.806057,35.688399],"lines":["Toei.Shinjuku"]},"Toei.Shinjuku.Sumiyoshi":{"ko":"스미요시","en":"Sumiyoshi","stem":"Sumiyoshi","coord":[139.815723,35.68904],"lines":["Toei.Shinjuku"]},"Toei.Shinjuku.NishiOjima":{"ko":"니시오지마","en":"Nishi-ojima","stem":"NishiOjima","coord":[139.826231,35.689391],"lines":["Toei.Shinjuku"]},"Toei.Shinjuku.Ojima":{"ko":"오지마","en":"Ojima","stem":"Ojima","coord":[139.834705,35.689752],"lines":["Toei.Shinjuku"]},"Toei.Shinjuku.HigashiOjima":{"ko":"히가시오지마","en":"Higashi-ojima","stem":"HigashiOjima","coord":[139.847255,35.689959],"lines":["Toei.Shinjuku"]},"Toei.Shinjuku.Funabori":{"ko":"후나보리","en":"Funabori","stem":"Funabori","coord":[139.863955,35.68376],"lines":["Toei.Shinjuku"]},"Toei.Shinjuku.Ichinoe":{"ko":"이치노에","en":"Ichinoe","stem":"Ichinoe","coord":[139.882586,35.685987],"lines":["Toei.Shinjuku"]},"Toei.Shinjuku.Mizue":{"ko":"미즈에","en":"Mizue","stem":"Mizue","coord":[139.8977,35.69351],"lines":["Toei.Shinjuku"]},"Toei.Shinjuku.Shinozaki":{"ko":"시노자키","en":"Shinozaki","stem":"Shinozaki","coord":[139.903796,35.706022],"lines":["Toei.Shinjuku"]},"Toei.Shinjuku.Motoyawata":{"ko":"모토야와타","en":"Motoyawata","stem":"Motoyawata","coord":[139.926613,35.722819],"lines":["Toei.Shinjuku"]},"Toei.Oedo.Tochomae":{"ko":"도초마에","en":"Tochomae","stem":"Tochomae","coord":[139.692677,35.690607],"lines":["Toei.Oedo"]},"Toei.Oedo.ShinjukuNishiguchi":{"ko":"신주쿠니시구치","en":"Shinjuku-nishiguchi","stem":"ShinjukuNishiguchi","coord":[139.699121,35.693367],"lines":["Toei.Oedo"]},"Toei.Oedo.HigashiShinjuku":{"ko":"히가시신주쿠","en":"Higashi-shinjuku","stem":"HigashiShinjuku","coord":[139.707434,35.697957],"lines":["Toei.Oedo"]},"Toei.Oedo.WakamatsuKawada":{"ko":"와카마쓰카와다","en":"Wakamatsu-kawada","stem":"WakamatsuKawada","coord":[139.718043,35.699188],"lines":["Toei.Oedo"]},"Toei.Oedo.UshigomeYanagicho":{"ko":"우시고메야나기초","en":"Ushigome-yanagicho","stem":"UshigomeYanagicho","coord":[139.72504,35.699501],"lines":["Toei.Oedo"]},"Toei.Oedo.UshigomeKagurazaka":{"ko":"우시고메카구라자카","en":"Ushigome-kagurazaka","stem":"UshigomeKagurazaka","coord":[139.735894,35.700911],"lines":["Toei.Oedo"]},"Toei.Oedo.Iidabashi":{"ko":"이다바시","en":"Iidabashi","stem":"Iidabashi","coord":[139.745257,35.702952],"lines":["Toei.Oedo"]},"Toei.Oedo.Kasuga":{"ko":"가스가","en":"Kasuga","stem":"Kasuga","coord":[139.752487,35.708493],"lines":["Toei.Oedo"]},"Toei.Oedo.HongoSanchome":{"ko":"혼고 3초메","en":"Hongo-sanchome","stem":"HongoSanchome","coord":[139.760524,35.70751],"lines":["Toei.Oedo"]},"Toei.Oedo.UenoOkachimachi":{"ko":"우에노오카치마치","en":"Ueno-okachimachi","stem":"UenoOkachimachi","coord":[139.773351,35.707949],"lines":["Toei.Oedo"]},"Toei.Oedo.ShinOkachimachi":{"ko":"신오카치마치","en":"Shin-okachimachi","stem":"ShinOkachimachi","coord":[139.782166,35.707009],"lines":["Toei.Oedo"]},"Toei.Oedo.Kuramae":{"ko":"구라마에","en":"Kuramae","stem":"Kuramae","coord":[139.792244,35.705587],"lines":["Toei.Oedo"]},"Toei.Oedo.Ryogoku":{"ko":"료고쿠","en":"Ryogoku","stem":"Ryogoku","coord":[139.797469,35.696807],"lines":["Toei.Oedo"]},"Toei.Oedo.Morishita":{"ko":"모리시타","en":"Morishita","stem":"Morishita","coord":[139.798251,35.687926],"lines":["Toei.Oedo"]},"Toei.Oedo.KiyosumiShirakawa":{"ko":"기요스미시라카와","en":"Kiyosumi-shirakawa","stem":"KiyosumiShirakawa","coord":[139.798758,35.682355],"lines":["Toei.Oedo"]},"Toei.Oedo.MonzenNakacho":{"ko":"몬젠나카초","en":"Monzen-nakacho","stem":"MonzenNakacho","coord":[139.795124,35.672772],"lines":["Toei.Oedo"]},"Toei.Oedo.Tsukishima":{"ko":"쓰키시마","en":"Tsukishima","stem":"Tsukishima","coord":[139.783912,35.663757],"lines":["Toei.Oedo"]},"Toei.Oedo.Kachidoki":{"ko":"가치도키","en":"Kachidoki","stem":"Kachidoki","coord":[139.777138,35.658934],"lines":["Toei.Oedo"]},"Toei.Oedo.Tsukijishijo":{"ko":"쓰키지 시장","en":"Tsukijishijo","stem":"Tsukijishijo","coord":[139.766929,35.664919],"lines":["Toei.Oedo"]},"Toei.Oedo.Shiodome":{"ko":"시오도메","en":"Shiodome","stem":"Shiodome","coord":[139.760225,35.663193],"lines":["Toei.Oedo"]},"Toei.Oedo.Daimon":{"ko":"다이몬","en":"Daimon","stem":"Daimon","coord":[139.755696,35.656671],"lines":["Toei.Oedo"]},"Toei.Oedo.Akabanebashi":{"ko":"아카바네바시","en":"Akabanebashi","stem":"Akabanebashi","coord":[139.743989,35.654985],"lines":["Toei.Oedo"]},"Toei.Oedo.AzabuJuban":{"ko":"아자부주반","en":"Azabu-juban","stem":"AzabuJuban","coord":[139.73633,35.656448],"lines":["Toei.Oedo"]},"Toei.Oedo.Roppongi":{"ko":"롯폰기","en":"Roppongi","stem":"Roppongi","coord":[139.731354,35.664106],"lines":["Toei.Oedo"]},"Toei.Oedo.AoyamaItchome":{"ko":"아오야마 1초메","en":"Aoyama-itchome","stem":"AoyamaItchome","coord":[139.723925,35.673067],"lines":["Toei.Oedo"]},"Toei.Oedo.KokuritsuKyogijo":{"ko":"고쿠리쓰쿄지조","en":"Kokuritsu-kyogijo","stem":"KokuritsuKyogijo","coord":[139.714667,35.679896],"lines":["Toei.Oedo"]},"Toei.Oedo.Yoyogi":{"ko":"요요기","en":"Yoyogi","stem":"Yoyogi","coord":[139.701603,35.683505],"lines":["Toei.Oedo"]},"Toei.Oedo.Shinjuku":{"ko":"신주쿠","en":"Shinjuku","stem":"Shinjuku","coord":[139.699019,35.688462],"lines":["Toei.Oedo"]},"Toei.Oedo.Tochomae.1":{"ko":"도초마에","en":"Tochomae","stem":"1","coord":[139.692708,35.690486],"lines":["Toei.Oedo"]},"Toei.Oedo.NishiShinjukuGochome":{"ko":"니시신주쿠 5초메","en":"Nishi-shinjuku-gochome","stem":"NishiShinjukuGochome","coord":[139.684545,35.689892],"lines":["Toei.Oedo"]},"Toei.Oedo.NakanoSakaue":{"ko":"나카노사카우에","en":"Nakano-sakaue","stem":"NakanoSakaue","coord":[139.682899,35.697887],"lines":["Toei.Oedo"]},"Toei.Oedo.HigashiNakano":{"ko":"히가시나카노","en":"Higashi-nakano","stem":"HigashiNakano","coord":[139.683112,35.70716],"lines":["Toei.Oedo"]},"Toei.Oedo.Nakai":{"ko":"나카이","en":"Nakai","stem":"Nakai","coord":[139.686296,35.713935],"lines":["Toei.Oedo"]},"Toei.Oedo.OchiaiMinamiNagasaki":{"ko":"오치아이미나미나가사키","en":"Ochiai-minami-nagasaki","stem":"OchiaiMinamiNagasaki","coord":[139.683389,35.723435],"lines":["Toei.Oedo"]},"Toei.Oedo.ShinEgota":{"ko":"신에고타","en":"Shin-egota","stem":"ShinEgota","coord":[139.670498,35.732579],"lines":["Toei.Oedo"]},"Toei.Oedo.Nerima":{"ko":"네리마","en":"Nerima","stem":"Nerima","coord":[139.654762,35.737411],"lines":["Toei.Oedo"]},"Toei.Oedo.Toshimaen":{"ko":"도시마엔","en":"Toshimaen","stem":"Toshimaen","coord":[139.649116,35.741711],"lines":["Toei.Oedo"]},"Toei.Oedo.NerimaKasugacho":{"ko":"네리마카스가초","en":"Nerima-kasugacho","stem":"NerimaKasugacho","coord":[139.6403,35.75141],"lines":["Toei.Oedo"]},"Toei.Oedo.Hikarigaoka":{"ko":"히카리가오카","en":"Hikarigaoka","stem":"Hikarigaoka","coord":[139.628901,35.758527],"lines":["Toei.Oedo"]},"JR-East.Yamanote.Osaki":{"ko":"오사키","en":"Osaki","stem":"Osaki","coord":[139.72816,35.62019],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Gotanda":{"ko":"고탄다","en":"Gotanda","stem":"Gotanda","coord":[139.72344,35.6263],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Meguro":{"ko":"메구로","en":"Meguro","stem":"Meguro","coord":[139.71566,35.63352],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Ebisu":{"ko":"에비스","en":"Ebisu","stem":"Ebisu","coord":[139.70983,35.64658],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Shibuya":{"ko":"시부야","en":"Shibuya","stem":"Shibuya","coord":[139.70149,35.65796],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Harajuku":{"ko":"하라주쿠","en":"Harajuku","stem":"Harajuku","coord":[139.70261,35.67129],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Yoyogi":{"ko":"요요기","en":"Yoyogi","stem":"Yoyogi","coord":[139.70205,35.68352],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Shinjuku":{"ko":"신주쿠","en":"Shinjuku","stem":"Shinjuku","coord":[139.70038,35.69018],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.ShinOkubo":{"ko":"신오쿠보","en":"Shin-Okubo","stem":"ShinOkubo","coord":[139.7001,35.70074],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Takadanobaba":{"ko":"다카다노바바","en":"Takadanobaba","stem":"Takadanobaba","coord":[139.70371,35.71268],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Mejiro":{"ko":"메지로","en":"Mejiro","stem":"Mejiro","coord":[139.70621,35.72018],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Ikebukuro":{"ko":"이케부쿠로","en":"Ikebukuro","stem":"Ikebukuro","coord":[139.71094,35.7299],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Otsuka":{"ko":"오쓰카","en":"Otsuka","stem":"Otsuka","coord":[139.72788,35.73157],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Sugamo":{"ko":"스가모","en":"Sugamo","stem":"Sugamo","coord":[139.74032,35.73383],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Komagome":{"ko":"고마고메","en":"Komagome","stem":"Komagome","coord":[139.74788,35.73684],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Tabata":{"ko":"다바타","en":"Tabata","stem":"Tabata","coord":[139.76149,35.7374],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.NishiNippori":{"ko":"니시닛포리","en":"Nishi-Nippori","stem":"NishiNippori","coord":[139.76676,35.73184],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Nippori":{"ko":"닛포리","en":"Nippori","stem":"Nippori","coord":[139.77093,35.72712],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Uguisudani":{"ko":"우구이스다니","en":"Uguisudani","stem":"Uguisudani","coord":[139.77787,35.72129],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Ueno":{"ko":"우에노","en":"Ueno","stem":"Ueno","coord":[139.77676,35.71351],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Okachimachi":{"ko":"오카치마치","en":"Okachimachi","stem":"Okachimachi","coord":[139.77454,35.70713],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Akihabara":{"ko":"아키하바라","en":"Akihabara","stem":"Akihabara","coord":[139.77288,35.69824],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Kanda":{"ko":"간다","en":"Kanda","stem":"Kanda","coord":[139.77065,35.69157],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Tokyo":{"ko":"도쿄","en":"Tokyo","stem":"Tokyo","coord":[139.76704,35.6813],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Yurakucho":{"ko":"유라쿠초","en":"Yurakucho","stem":"Yurakucho","coord":[139.76288,35.67491],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Shimbashi":{"ko":"신바시","en":"Shimbashi","stem":"Shimbashi","coord":[139.75788,35.6663],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Hamamatsucho":{"ko":"하마마쓰초","en":"Hamamatsucho","stem":"Hamamatsucho","coord":[139.75705,35.65546],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Tamachi":{"ko":"다마치","en":"Tamachi","stem":"Tamachi","coord":[139.7476,35.64574],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.TakanawaGateway":{"ko":"다카나와게이트웨이","en":"Takanawa Gateway","stem":"TakanawaGateway","coord":[139.740657,35.635395],"lines":["JR-East.Yamanote"]},"JR-East.Yamanote.Shinagawa":{"ko":"시나가와","en":"Shinagawa","stem":"Shinagawa","coord":[139.73871,35.6288],"lines":["JR-East.Yamanote"]},"JR-East.ChuoRapid.Tokyo":{"ko":"도쿄","en":"Tokyo","stem":"Tokyo","coord":[139.76704,35.6813],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.Kanda":{"ko":"간다","en":"Kanda","stem":"Kanda","coord":[139.77065,35.69157],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.Ochanomizu":{"ko":"오차노미즈","en":"Ochanomizu","stem":"Ochanomizu","coord":[139.7651,35.69935],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.Yotsuya":{"ko":"요쓰야","en":"Yotsuya","stem":"Yotsuya","coord":[139.73038,35.6849],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.Shinjuku":{"ko":"신주쿠","en":"Shinjuku","stem":"Shinjuku","coord":[139.70038,35.69018],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.Nakano":{"ko":"나카노","en":"Nakano","stem":"Nakano","coord":[139.66594,35.70573],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.Koenji":{"ko":"고엔지","en":"Koenji","stem":"Koenji","coord":[139.64955,35.70518],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.Asagaya":{"ko":"아사가야","en":"Asagaya","stem":"Asagaya","coord":[139.63566,35.70462],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.Ogikubo":{"ko":"오기쿠보","en":"Ogikubo","stem":"Ogikubo","coord":[139.62011,35.70434],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.NishiOgikubo":{"ko":"니시오기쿠보","en":"Nishi-Ogikubo","stem":"NishiOgikubo","coord":[139.59928,35.70351],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.Kichijoji":{"ko":"기치조지","en":"Kichijoji","stem":"Kichijoji","coord":[139.57984,35.70295],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.Mitaka":{"ko":"미타카","en":"Mitaka","stem":"Mitaka","coord":[139.56067,35.70268],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.MusashiSakai":{"ko":"무사시사카이","en":"Musashi-Sakai","stem":"MusashiSakai","coord":[139.54345,35.70184],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.HigashiKoganei":{"ko":"히가시코가네이","en":"Higashi-Koganei","stem":"HigashiKoganei","coord":[139.52373,35.70156],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.MusashiKoganei":{"ko":"무사시코가네이","en":"Musashi-Koganei","stem":"MusashiKoganei","coord":[139.50595,35.70101],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.Kokubunji":{"ko":"고쿠분지","en":"Kokubunji","stem":"Kokubunji","coord":[139.48096,35.6999],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.NishiKokubunji":{"ko":"니시코쿠분지","en":"Nishi-Kokubunji","stem":"NishiKokubunji","coord":[139.46596,35.69962],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.Kunitachi":{"ko":"구니타치","en":"Kunitachi","stem":"Kunitachi","coord":[139.44651,35.69906],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.Tachikawa":{"ko":"다치카와","en":"Tachikawa","stem":"Tachikawa","coord":[139.41374,35.69795],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.Hino":{"ko":"히노","en":"Hino","stem":"Hino","coord":[139.39346,35.67851],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.Toyoda":{"ko":"도요다","en":"Toyoda","stem":"Toyoda","coord":[139.38124,35.65934],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.Hachioji":{"ko":"하치오지","en":"Hachioji","stem":"Hachioji","coord":[139.33903,35.65545],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.NishiHachioji":{"ko":"니시하치오지","en":"Nishi-Hachioji","stem":"NishiHachioji","coord":[139.31181,35.65601],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoRapid.Takao":{"ko":"다카오","en":"Takao","stem":"Takao","coord":[139.28264,35.6424],"lines":["JR-East.ChuoRapid"]},"JR-East.ChuoSobuLocal.Chiba":{"ko":"지바","en":"Chiba","stem":"Chiba","coord":[140.11257,35.61353],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.NishiChiba":{"ko":"니시치바","en":"Nishi-Chiba","stem":"NishiChiba","coord":[140.10313,35.6227],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Inage":{"ko":"이나게","en":"Inage","stem":"Inage","coord":[140.09257,35.63714],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.ShinKemigawa":{"ko":"신케미가와","en":"Shin-Kemigawa","stem":"ShinKemigawa","coord":[140.07331,35.65185],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Makuhari":{"ko":"마쿠하리","en":"Makuhari","stem":"Makuhari","coord":[140.05758,35.65936],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Makuharihongo":{"ko":"마쿠하리혼고","en":"Makuharihongo","stem":"Makuharihongo","coord":[140.04174,35.67297],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Tsudanuma":{"ko":"쓰다누마","en":"Tsudanuma","stem":"Tsudanuma","coord":[140.02008,35.6913],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.HigashiFunabashi":{"ko":"히가시후나바시","en":"Higashi-Funabashi","stem":"HigashiFunabashi","coord":[140.00397,35.69963],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Funabashi":{"ko":"후나바시","en":"Funabashi","stem":"Funabashi","coord":[139.9848,35.70158],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.NishiFunabashi":{"ko":"니시후나바시","en":"Nishi-Funabashi","stem":"NishiFunabashi","coord":[139.95925,35.70713],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.ShimosaNakayama":{"ko":"시모사나카야마","en":"Shimosa-Nakayama","stem":"ShimosaNakayama","coord":[139.94286,35.71407],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.MotoYawata":{"ko":"모토야와타","en":"Moto-Yawata","stem":"MotoYawata","coord":[139.92731,35.72074],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Ichikawa":{"ko":"이치카와","en":"Ichikawa","stem":"Ichikawa","coord":[139.90786,35.72879],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Koiwa":{"ko":"고이와","en":"Koiwa","stem":"Koiwa","coord":[139.88175,35.73324],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.ShinKoiwa":{"ko":"신코이와","en":"Shin-Koiwa","stem":"ShinKoiwa","coord":[139.85787,35.71685],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Hirai":{"ko":"히라이","en":"Hirai","stem":"Hirai","coord":[139.84231,35.70629],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Kameido":{"ko":"가메이도","en":"Kameido","stem":"Kameido","coord":[139.82648,35.69713],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Kinshicho":{"ko":"긴시초","en":"Kinshicho","stem":"Kinshicho","coord":[139.81398,35.69657],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Ryogoku":{"ko":"료고쿠","en":"Ryogoku","stem":"Ryogoku","coord":[139.79315,35.69574],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Asakusabashi":{"ko":"아사쿠사바시","en":"Asakusabashi","stem":"Asakusabashi","coord":[139.78399,35.6974],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Akihabara":{"ko":"아키하바라","en":"Akihabara","stem":"Akihabara","coord":[139.77288,35.69824],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Ochanomizu":{"ko":"오차노미즈","en":"Ochanomizu","stem":"Ochanomizu","coord":[139.7651,35.69935],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Suidobashi":{"ko":"스이도바시","en":"Suidobashi","stem":"Suidobashi","coord":[139.75341,35.70207],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Iidabashi":{"ko":"이다바시","en":"Iidabashi","stem":"Iidabashi","coord":[139.74482,35.70157],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Ichigaya":{"ko":"이치가야","en":"Ichigaya","stem":"Ichigaya","coord":[139.7351,35.69102],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Yotsuya":{"ko":"요쓰야","en":"Yotsuya","stem":"Yotsuya","coord":[139.73038,35.6849],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Shinanomachi":{"ko":"시나노마치","en":"Shinanomachi","stem":"Shinanomachi","coord":[139.72094,35.67991],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Sendagaya":{"ko":"센다가야","en":"Sendagaya","stem":"Sendagaya","coord":[139.71153,35.68119],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Yoyogi":{"ko":"요요기","en":"Yoyogi","stem":"Yoyogi","coord":[139.70205,35.68352],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Shinjuku":{"ko":"신주쿠","en":"Shinjuku","stem":"Shinjuku","coord":[139.70038,35.69018],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Okubo":{"ko":"오쿠보","en":"Okubo","stem":"Okubo","coord":[139.69733,35.70046],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.HigashiNakano":{"ko":"히가시나카노","en":"Higashi-Nakano","stem":"HigashiNakano","coord":[139.68483,35.70601],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Nakano":{"ko":"나카노","en":"Nakano","stem":"Nakano","coord":[139.66594,35.70573],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Koenji":{"ko":"고엔지","en":"Koenji","stem":"Koenji","coord":[139.64955,35.70518],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Asagaya":{"ko":"아사가야","en":"Asagaya","stem":"Asagaya","coord":[139.63566,35.70462],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Ogikubo":{"ko":"오기쿠보","en":"Ogikubo","stem":"Ogikubo","coord":[139.62011,35.70434],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.NishiOgikubo":{"ko":"니시오기쿠보","en":"Nishi-Ogikubo","stem":"NishiOgikubo","coord":[139.59928,35.70351],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Kichijoji":{"ko":"기치조지","en":"Kichijoji","stem":"Kichijoji","coord":[139.57984,35.70295],"lines":["JR-East.ChuoSobuLocal"]},"JR-East.ChuoSobuLocal.Mitaka":{"ko":"미타카","en":"Mitaka","stem":"Mitaka","coord":[139.56067,35.70268],"lines":["JR-East.ChuoSobuLocal"]}};
+const STEM_MAP={"Shibuya":["TokyoMetro.Ginza.Shibuya","TokyoMetro.Hanzomon.Shibuya","TokyoMetro.Fukutoshin.Shibuya","JR-East.Yamanote.Shibuya"],"OmoteSando":["TokyoMetro.Ginza.OmoteSando","TokyoMetro.Chiyoda.OmoteSando","TokyoMetro.Hanzomon.OmoteSando"],"AoyamaItchome":["TokyoMetro.Ginza.AoyamaItchome","TokyoMetro.Hanzomon.AoyamaItchome","Toei.Oedo.AoyamaItchome"],"AkasakaMitsuke":["TokyoMetro.Ginza.AkasakaMitsuke","TokyoMetro.Marunouchi.AkasakaMitsuke"],"TameikeSanno":["TokyoMetro.Ginza.TameikeSanno","TokyoMetro.Namboku.TameikeSanno"],"Shimbashi":["TokyoMetro.Ginza.Shimbashi","Toei.Asakusa.Shimbashi","JR-East.Yamanote.Shimbashi"],"Ginza":["TokyoMetro.Ginza.Ginza","TokyoMetro.Marunouchi.Ginza","TokyoMetro.Hibiya.Ginza"],"Nihombashi":["TokyoMetro.Ginza.Nihombashi","TokyoMetro.Tozai.Nihombashi","Toei.Asakusa.Nihombashi"],"Mitsukoshimae":["TokyoMetro.Ginza.Mitsukoshimae","TokyoMetro.Hanzomon.Mitsukoshimae"],"Kanda":["TokyoMetro.Ginza.Kanda","JR-East.Yamanote.Kanda","JR-East.ChuoRapid.Kanda"],"Ueno":["TokyoMetro.Ginza.Ueno","TokyoMetro.Hibiya.Ueno","JR-East.Yamanote.Ueno"],"Asakusa":["TokyoMetro.Ginza.Asakusa","Toei.Asakusa.Asakusa"],"Ogikubo":["TokyoMetro.Marunouchi.Ogikubo","JR-East.ChuoRapid.Ogikubo","JR-East.ChuoSobuLocal.Ogikubo"],"NakanoSakaue":["TokyoMetro.Marunouchi.NakanoSakaue","Toei.Oedo.NakanoSakaue"],"Shinjuku":["TokyoMetro.Marunouchi.Shinjuku","Toei.Shinjuku.Shinjuku","Toei.Oedo.Shinjuku","JR-East.Yamanote.Shinjuku","JR-East.ChuoRapid.Shinjuku","JR-East.ChuoSobuLocal.Shinjuku"],"ShinjukuSanchome":["TokyoMetro.Marunouchi.ShinjukuSanchome","TokyoMetro.Fukutoshin.ShinjukuSanchome","Toei.Shinjuku.ShinjukuSanchome"],"Yotsuya":["TokyoMetro.Marunouchi.Yotsuya","TokyoMetro.Namboku.Yotsuya","JR-East.ChuoRapid.Yotsuya","JR-East.ChuoSobuLocal.Yotsuya"],"KokkaiGijidomae":["TokyoMetro.Marunouchi.KokkaiGijidomae","TokyoMetro.Chiyoda.KokkaiGijidomae"],"Kasumigaseki":["TokyoMetro.Marunouchi.Kasumigaseki","TokyoMetro.Hibiya.Kasumigaseki","TokyoMetro.Chiyoda.Kasumigaseki"],"Tokyo":["TokyoMetro.Marunouchi.Tokyo","JR-East.Yamanote.Tokyo","JR-East.ChuoRapid.Tokyo"],"Otemachi":["TokyoMetro.Marunouchi.Otemachi","TokyoMetro.Tozai.Otemachi","TokyoMetro.Chiyoda.Otemachi","TokyoMetro.Hanzomon.Otemachi","Toei.Mita.Otemachi"],"Ochanomizu":["TokyoMetro.Marunouchi.Ochanomizu","JR-East.ChuoRapid.Ochanomizu","JR-East.ChuoSobuLocal.Ochanomizu"],"HongoSanchome":["TokyoMetro.Marunouchi.HongoSanchome","Toei.Oedo.HongoSanchome"],"Korakuen":["TokyoMetro.Marunouchi.Korakuen","TokyoMetro.Namboku.Korakuen"],"Ikebukuro":["TokyoMetro.Marunouchi.Ikebukuro","TokyoMetro.Yurakucho.Ikebukuro","TokyoMetro.Fukutoshin.Ikebukuro","JR-East.Yamanote.Ikebukuro"],"Ebisu":["TokyoMetro.Hibiya.Ebisu","JR-East.Yamanote.Ebisu"],"Roppongi":["TokyoMetro.Hibiya.Roppongi","Toei.Oedo.Roppongi"],"Hibiya":["TokyoMetro.Hibiya.Hibiya","TokyoMetro.Chiyoda.Hibiya","Toei.Mita.Hibiya"],"HigashiGinza":["TokyoMetro.Hibiya.HigashiGinza","Toei.Asakusa.HigashiGinza"],"Kayabacho":["TokyoMetro.Hibiya.Kayabacho","TokyoMetro.Tozai.Kayabacho"],"Ningyocho":["TokyoMetro.Hibiya.Ningyocho","Toei.Asakusa.Ningyocho"],"Akihabara":["TokyoMetro.Hibiya.Akihabara","JR-East.Yamanote.Akihabara","JR-East.ChuoSobuLocal.Akihabara"],"KitaSenju":["TokyoMetro.Hibiya.KitaSenju","TokyoMetro.Chiyoda.KitaSenju"],"Nakano":["TokyoMetro.Tozai.Nakano","JR-East.ChuoRapid.Nakano","JR-East.ChuoSobuLocal.Nakano"],"Takadanobaba":["TokyoMetro.Tozai.Takadanobaba","JR-East.Yamanote.Takadanobaba"],"Iidabashi":["TokyoMetro.Tozai.Iidabashi","TokyoMetro.Yurakucho.Iidabashi","TokyoMetro.Namboku.Iidabashi","Toei.Oedo.Iidabashi","JR-East.ChuoSobuLocal.Iidabashi"],"Kudanshita":["TokyoMetro.Tozai.Kudanshita","TokyoMetro.Hanzomon.Kudanshita","Toei.Shinjuku.Kudanshita"],"MonzenNakacho":["TokyoMetro.Tozai.MonzenNakacho","Toei.Oedo.MonzenNakacho"],"NishiFunabashi":["TokyoMetro.Tozai.NishiFunabashi","JR-East.ChuoSobuLocal.NishiFunabashi"],"MeijiJingumae":["TokyoMetro.Chiyoda.MeijiJingumae","TokyoMetro.Fukutoshin.MeijiJingumae"],"NishiNippori":["TokyoMetro.Chiyoda.NishiNippori","JR-East.Yamanote.NishiNippori"],"Wakoshi":["TokyoMetro.Yurakucho.Wakoshi","TokyoMetro.Fukutoshin.Wakoshi"],"ChikatetsuNarimasu":["TokyoMetro.Yurakucho.ChikatetsuNarimasu","TokyoMetro.Fukutoshin.ChikatetsuNarimasu"],"ChikatetsuAkatsuka":["TokyoMetro.Yurakucho.ChikatetsuAkatsuka","TokyoMetro.Fukutoshin.ChikatetsuAkatsuka"],"Heiwadai":["TokyoMetro.Yurakucho.Heiwadai","TokyoMetro.Fukutoshin.Heiwadai"],"Hikawadai":["TokyoMetro.Yurakucho.Hikawadai","TokyoMetro.Fukutoshin.Hikawadai"],"KotakeMukaihara":["TokyoMetro.Yurakucho.KotakeMukaihara","TokyoMetro.Fukutoshin.KotakeMukaihara"],"Senkawa":["TokyoMetro.Yurakucho.Senkawa","TokyoMetro.Fukutoshin.Senkawa"],"Kanamecho":["TokyoMetro.Yurakucho.Kanamecho","TokyoMetro.Fukutoshin.Kanamecho"],"Ichigaya":["TokyoMetro.Yurakucho.Ichigaya","TokyoMetro.Namboku.Ichigaya","Toei.Shinjuku.Ichigaya","JR-East.ChuoSobuLocal.Ichigaya"],"Nagatacho":["TokyoMetro.Yurakucho.Nagatacho","TokyoMetro.Hanzomon.Nagatacho","TokyoMetro.Namboku.Nagatacho"],"Yurakucho":["TokyoMetro.Yurakucho.Yurakucho","JR-East.Yamanote.Yurakucho"],"Tsukishima":["TokyoMetro.Yurakucho.Tsukishima","Toei.Oedo.Tsukishima"],"Jimbocho":["TokyoMetro.Hanzomon.Jimbocho","Toei.Mita.Jimbocho","Toei.Shinjuku.Jimbocho"],"KiyosumiShirakawa":["TokyoMetro.Hanzomon.KiyosumiShirakawa","Toei.Oedo.KiyosumiShirakawa"],"Sumiyoshi":["TokyoMetro.Hanzomon.Sumiyoshi","Toei.Shinjuku.Sumiyoshi"],"Kinshicho":["TokyoMetro.Hanzomon.Kinshicho","JR-East.ChuoSobuLocal.Kinshicho"],"Oshiage":["TokyoMetro.Hanzomon.Oshiage","Toei.Asakusa.Oshiage"],"Meguro":["TokyoMetro.Namboku.Meguro","Toei.Mita.Meguro","JR-East.Yamanote.Meguro"],"Shirokanedai":["TokyoMetro.Namboku.Shirokanedai","Toei.Mita.Shirokanedai"],"ShirokaneTakanawa":["TokyoMetro.Namboku.ShirokaneTakanawa","Toei.Mita.ShirokaneTakanawa"],"AzabuJuban":["TokyoMetro.Namboku.AzabuJuban","Toei.Oedo.AzabuJuban"],"Komagome":["TokyoMetro.Namboku.Komagome","JR-East.Yamanote.Komagome"],"HigashiShinjuku":["TokyoMetro.Fukutoshin.HigashiShinjuku","Toei.Oedo.HigashiShinjuku"],"Gotanda":["Toei.Asakusa.Gotanda","JR-East.Yamanote.Gotanda"],"Mita":["Toei.Asakusa.Mita","Toei.Mita.Mita"],"Daimon":["Toei.Asakusa.Daimon","Toei.Oedo.Daimon"],"Asakusabashi":["Toei.Asakusa.Asakusabashi","JR-East.ChuoSobuLocal.Asakusabashi"],"Kuramae":["Toei.Asakusa.Kuramae","Toei.Oedo.Kuramae"],"Suidobashi":["Toei.Mita.Suidobashi","JR-East.ChuoSobuLocal.Suidobashi"],"Kasuga":["Toei.Mita.Kasuga","Toei.Oedo.Kasuga"],"Sugamo":["Toei.Mita.Sugamo","JR-East.Yamanote.Sugamo"],"Morishita":["Toei.Shinjuku.Morishita","Toei.Oedo.Morishita"],"Ryogoku":["Toei.Oedo.Ryogoku","JR-East.ChuoSobuLocal.Ryogoku"],"Yoyogi":["Toei.Oedo.Yoyogi","JR-East.Yamanote.Yoyogi","JR-East.ChuoSobuLocal.Yoyogi"],"HigashiNakano":["Toei.Oedo.HigashiNakano","JR-East.ChuoSobuLocal.HigashiNakano"],"Koenji":["JR-East.ChuoRapid.Koenji","JR-East.ChuoSobuLocal.Koenji"],"Asagaya":["JR-East.ChuoRapid.Asagaya","JR-East.ChuoSobuLocal.Asagaya"],"NishiOgikubo":["JR-East.ChuoRapid.NishiOgikubo","JR-East.ChuoSobuLocal.NishiOgikubo"],"Kichijoji":["JR-East.ChuoRapid.Kichijoji","JR-East.ChuoSobuLocal.Kichijoji"],"Mitaka":["JR-East.ChuoRapid.Mitaka","JR-East.ChuoSobuLocal.Mitaka"]};
+const LINE_IDX={"TokyoMetro.Ginza":{"TokyoMetro.Ginza.Shibuya":0,"TokyoMetro.Ginza.OmoteSando":1,"TokyoMetro.Ginza.Gaiemmae":2,"TokyoMetro.Ginza.AoyamaItchome":3,"TokyoMetro.Ginza.AkasakaMitsuke":4,"TokyoMetro.Ginza.TameikeSanno":5,"TokyoMetro.Ginza.Toranomon":6,"TokyoMetro.Ginza.Shimbashi":7,"TokyoMetro.Ginza.Ginza":8,"TokyoMetro.Ginza.Kyobashi":9,"TokyoMetro.Ginza.Nihombashi":10,"TokyoMetro.Ginza.Mitsukoshimae":11,"TokyoMetro.Ginza.Kanda":12,"TokyoMetro.Ginza.Suehirocho":13,"TokyoMetro.Ginza.UenoHirokoji":14,"TokyoMetro.Ginza.Ueno":15,"TokyoMetro.Ginza.Inaricho":16,"TokyoMetro.Ginza.Tawaramachi":17,"TokyoMetro.Ginza.Asakusa":18},"TokyoMetro.Marunouchi":{"TokyoMetro.Marunouchi.Ogikubo":0,"TokyoMetro.Marunouchi.MinamiAsagaya":1,"TokyoMetro.Marunouchi.ShinKoenji":2,"TokyoMetro.Marunouchi.HigashiKoenji":3,"TokyoMetro.Marunouchi.ShinNakano":4,"TokyoMetro.Marunouchi.NakanoSakaue":5,"TokyoMetro.Marunouchi.NishiShinjuku":6,"TokyoMetro.Marunouchi.Shinjuku":7,"TokyoMetro.Marunouchi.ShinjukuSanchome":8,"TokyoMetro.Marunouchi.ShinjukuGyoemmae":9,"TokyoMetro.Marunouchi.YotsuyaSanchome":10,"TokyoMetro.Marunouchi.Yotsuya":11,"TokyoMetro.Marunouchi.AkasakaMitsuke":12,"TokyoMetro.Marunouchi.KokkaiGijidomae":13,"TokyoMetro.Marunouchi.Kasumigaseki":14,"TokyoMetro.Marunouchi.Ginza":15,"TokyoMetro.Marunouchi.Tokyo":16,"TokyoMetro.Marunouchi.Otemachi":17,"TokyoMetro.Marunouchi.Awajicho":18,"TokyoMetro.Marunouchi.Ochanomizu":19,"TokyoMetro.Marunouchi.HongoSanchome":20,"TokyoMetro.Marunouchi.Korakuen":21,"TokyoMetro.Marunouchi.Myogadani":22,"TokyoMetro.Marunouchi.ShinOtsuka":23,"TokyoMetro.Marunouchi.Ikebukuro":24},"TokyoMetro.Hibiya":{"TokyoMetro.Hibiya.NakaMeguro":0,"TokyoMetro.Hibiya.Ebisu":1,"TokyoMetro.Hibiya.HiroO":2,"TokyoMetro.Hibiya.Roppongi":3,"TokyoMetro.Hibiya.Kamiyacho":4,"TokyoMetro.Hibiya.ToranomonHills":5,"TokyoMetro.Hibiya.Kasumigaseki":6,"TokyoMetro.Hibiya.Hibiya":7,"TokyoMetro.Hibiya.Ginza":8,"TokyoMetro.Hibiya.HigashiGinza":9,"TokyoMetro.Hibiya.Tsukiji":10,"TokyoMetro.Hibiya.Hatchobori":11,"TokyoMetro.Hibiya.Kayabacho":12,"TokyoMetro.Hibiya.Ningyocho":13,"TokyoMetro.Hibiya.Kodemmacho":14,"TokyoMetro.Hibiya.Akihabara":15,"TokyoMetro.Hibiya.NakaOkachimachi":16,"TokyoMetro.Hibiya.Ueno":17,"TokyoMetro.Hibiya.Iriya":18,"TokyoMetro.Hibiya.Minowa":19,"TokyoMetro.Hibiya.MinamiSenju":20,"TokyoMetro.Hibiya.KitaSenju":21,"TokyoMetro.Hibiya.ShinKoshigaya":22},"TokyoMetro.Tozai":{"TokyoMetro.Tozai.Nakano":0,"TokyoMetro.Tozai.Ochiai":1,"TokyoMetro.Tozai.Takadanobaba":2,"TokyoMetro.Tozai.Waseda":3,"TokyoMetro.Tozai.Kagurazaka":4,"TokyoMetro.Tozai.Iidabashi":5,"TokyoMetro.Tozai.Kudanshita":6,"TokyoMetro.Tozai.Takebashi":7,"TokyoMetro.Tozai.Otemachi":8,"TokyoMetro.Tozai.Nihombashi":9,"TokyoMetro.Tozai.Kayabacho":10,"TokyoMetro.Tozai.MonzenNakacho":11,"TokyoMetro.Tozai.Kiba":12,"TokyoMetro.Tozai.Toyocho":13,"TokyoMetro.Tozai.MinamiSunamachi":14,"TokyoMetro.Tozai.NishiKasai":15,"TokyoMetro.Tozai.Kasai":16,"TokyoMetro.Tozai.Urayasu":17,"TokyoMetro.Tozai.MinamiGyotoku":18,"TokyoMetro.Tozai.Gyotoku":19,"TokyoMetro.Tozai.Myoden":20,"TokyoMetro.Tozai.BarakiNakayama":21,"TokyoMetro.Tozai.NishiFunabashi":22},"TokyoMetro.Chiyoda":{"TokyoMetro.Chiyoda.Machida":0,"TokyoMetro.Chiyoda.SeijogakuenMae":1,"TokyoMetro.Chiyoda.YoyogiUehara":2,"TokyoMetro.Chiyoda.YoyogiKoen":3,"TokyoMetro.Chiyoda.MeijiJingumae":4,"TokyoMetro.Chiyoda.OmoteSando":5,"TokyoMetro.Chiyoda.Nogizaka":6,"TokyoMetro.Chiyoda.Akasaka":7,"TokyoMetro.Chiyoda.KokkaiGijidomae":8,"TokyoMetro.Chiyoda.Kasumigaseki":9,"TokyoMetro.Chiyoda.Hibiya":10,"TokyoMetro.Chiyoda.Nijubashimae":11,"TokyoMetro.Chiyoda.Otemachi":12,"TokyoMetro.Chiyoda.ShinOchanomizu":13,"TokyoMetro.Chiyoda.Yushima":14,"TokyoMetro.Chiyoda.Nezu":15,"TokyoMetro.Chiyoda.Sendagi":16,"TokyoMetro.Chiyoda.NishiNippori":17,"TokyoMetro.Chiyoda.Machiya":18,"TokyoMetro.Chiyoda.KitaSenju":19,"TokyoMetro.Chiyoda.Ayase":20,"TokyoMetro.Chiyoda.KitaAyase":21},"TokyoMetro.Yurakucho":{"TokyoMetro.Yurakucho.Wakoshi":0,"TokyoMetro.Yurakucho.ChikatetsuNarimasu":1,"TokyoMetro.Yurakucho.ChikatetsuAkatsuka":2,"TokyoMetro.Yurakucho.Heiwadai":3,"TokyoMetro.Yurakucho.Hikawadai":4,"TokyoMetro.Yurakucho.KotakeMukaihara":5,"TokyoMetro.Yurakucho.Senkawa":6,"TokyoMetro.Yurakucho.Kanamecho":7,"TokyoMetro.Yurakucho.Ikebukuro":8,"TokyoMetro.Yurakucho.HigashiIkebukuro":9,"TokyoMetro.Yurakucho.Gokokuji":10,"TokyoMetro.Yurakucho.Edogawabashi":11,"TokyoMetro.Yurakucho.Iidabashi":12,"TokyoMetro.Yurakucho.Ichigaya":13,"TokyoMetro.Yurakucho.Kojimachi":14,"TokyoMetro.Yurakucho.Nagatacho":15,"TokyoMetro.Yurakucho.Sakuradamon":16,"TokyoMetro.Yurakucho.Yurakucho":17,"TokyoMetro.Yurakucho.GinzaItchome":18,"TokyoMetro.Yurakucho.Shintomicho":19,"TokyoMetro.Yurakucho.Tsukishima":20,"TokyoMetro.Yurakucho.Toyosu":21,"TokyoMetro.Yurakucho.Tatsumi":22,"TokyoMetro.Yurakucho.ShinKiba":23},"TokyoMetro.Hanzomon":{"TokyoMetro.Hanzomon.Shibuya":0,"TokyoMetro.Hanzomon.OmoteSando":1,"TokyoMetro.Hanzomon.AoyamaItchome":2,"TokyoMetro.Hanzomon.Nagatacho":3,"TokyoMetro.Hanzomon.Hanzomon":4,"TokyoMetro.Hanzomon.Kudanshita":5,"TokyoMetro.Hanzomon.Jimbocho":6,"TokyoMetro.Hanzomon.Otemachi":7,"TokyoMetro.Hanzomon.Mitsukoshimae":8,"TokyoMetro.Hanzomon.Suitengumae":9,"TokyoMetro.Hanzomon.KiyosumiShirakawa":10,"TokyoMetro.Hanzomon.Sumiyoshi":11,"TokyoMetro.Hanzomon.Kinshicho":12,"TokyoMetro.Hanzomon.Oshiage":13},"TokyoMetro.Namboku":{"TokyoMetro.Namboku.Meguro":0,"TokyoMetro.Namboku.Shirokanedai":1,"TokyoMetro.Namboku.ShirokaneTakanawa":2,"TokyoMetro.Namboku.AzabuJuban":3,"TokyoMetro.Namboku.RoppongiItchome":4,"TokyoMetro.Namboku.TameikeSanno":5,"TokyoMetro.Namboku.Nagatacho":6,"TokyoMetro.Namboku.Yotsuya":7,"TokyoMetro.Namboku.Ichigaya":8,"TokyoMetro.Namboku.Iidabashi":9,"TokyoMetro.Namboku.Korakuen":10,"TokyoMetro.Namboku.Todaimae":11,"TokyoMetro.Namboku.HonKomagome":12,"TokyoMetro.Namboku.Komagome":13,"TokyoMetro.Namboku.Nishigahara":14,"TokyoMetro.Namboku.Oji":15,"TokyoMetro.Namboku.OjiKamiya":16,"TokyoMetro.Namboku.Shimo":17,"TokyoMetro.Namboku.AkabaneIwabuchi":18},"TokyoMetro.Fukutoshin":{"TokyoMetro.Fukutoshin.Wakoshi":0,"TokyoMetro.Fukutoshin.ChikatetsuNarimasu":1,"TokyoMetro.Fukutoshin.ChikatetsuAkatsuka":2,"TokyoMetro.Fukutoshin.Heiwadai":3,"TokyoMetro.Fukutoshin.Hikawadai":4,"TokyoMetro.Fukutoshin.KotakeMukaihara":5,"TokyoMetro.Fukutoshin.Senkawa":6,"TokyoMetro.Fukutoshin.Kanamecho":7,"TokyoMetro.Fukutoshin.Ikebukuro":8,"TokyoMetro.Fukutoshin.Zoshigaya":9,"TokyoMetro.Fukutoshin.NishiWaseda":10,"TokyoMetro.Fukutoshin.HigashiShinjuku":11,"TokyoMetro.Fukutoshin.ShinjukuSanchome":12,"TokyoMetro.Fukutoshin.KitaSando":13,"TokyoMetro.Fukutoshin.MeijiJingumae":14,"TokyoMetro.Fukutoshin.Shibuya":15},"Toei.Asakusa":{"Toei.Asakusa.NishiMagome":0,"Toei.Asakusa.Magome":1,"Toei.Asakusa.Nakanobu":2,"Toei.Asakusa.Togoshi":3,"Toei.Asakusa.Gotanda":4,"Toei.Asakusa.Takanawadai":5,"Toei.Asakusa.Sengakuji":6,"Toei.Asakusa.Mita":7,"Toei.Asakusa.Daimon":8,"Toei.Asakusa.Shimbashi":9,"Toei.Asakusa.HigashiGinza":10,"Toei.Asakusa.Takaracho":11,"Toei.Asakusa.Nihombashi":12,"Toei.Asakusa.Ningyocho":13,"Toei.Asakusa.HigashiNihombashi":14,"Toei.Asakusa.Asakusabashi":15,"Toei.Asakusa.Kuramae":16,"Toei.Asakusa.Asakusa":17,"Toei.Asakusa.HonjoAzumabashi":18,"Toei.Asakusa.Oshiage":19},"Toei.Mita":{"Toei.Mita.Meguro":0,"Toei.Mita.Shirokanedai":1,"Toei.Mita.ShirokaneTakanawa":2,"Toei.Mita.Mita":3,"Toei.Mita.Shibakoen":4,"Toei.Mita.Onarimon":5,"Toei.Mita.Uchisaiwaicho":6,"Toei.Mita.Hibiya":7,"Toei.Mita.Otemachi":8,"Toei.Mita.Jimbocho":9,"Toei.Mita.Suidobashi":10,"Toei.Mita.Kasuga":11,"Toei.Mita.Hakusan":12,"Toei.Mita.Sengoku":13,"Toei.Mita.Sugamo":14,"Toei.Mita.NishiSugamo":15,"Toei.Mita.ShinItabashi":16,"Toei.Mita.ItabashiKuyakushomae":17,"Toei.Mita.Itabashihoncho":18,"Toei.Mita.Motohasunuma":19,"Toei.Mita.ShimuraSakaue":20,"Toei.Mita.ShimuraSanchome":21,"Toei.Mita.Hasune":22,"Toei.Mita.Nishidai":23,"Toei.Mita.Takashimadaira":24,"Toei.Mita.ShinTakashimadaira":25,"Toei.Mita.NishiTakashimadaira":26},"Toei.Shinjuku":{"Toei.Shinjuku.Shinjuku":0,"Toei.Shinjuku.ShinjukuSanchome":1,"Toei.Shinjuku.Akebonobashi":2,"Toei.Shinjuku.Ichigaya":3,"Toei.Shinjuku.Kudanshita":4,"Toei.Shinjuku.Jimbocho":5,"Toei.Shinjuku.Ogawamachi":6,"Toei.Shinjuku.Iwamotocho":7,"Toei.Shinjuku.BakuroYokoyama":8,"Toei.Shinjuku.Hamacho":9,"Toei.Shinjuku.Morishita":10,"Toei.Shinjuku.Kikukawa":11,"Toei.Shinjuku.Sumiyoshi":12,"Toei.Shinjuku.NishiOjima":13,"Toei.Shinjuku.Ojima":14,"Toei.Shinjuku.HigashiOjima":15,"Toei.Shinjuku.Funabori":16,"Toei.Shinjuku.Ichinoe":17,"Toei.Shinjuku.Mizue":18,"Toei.Shinjuku.Shinozaki":19,"Toei.Shinjuku.Motoyawata":20},"Toei.Oedo":{"Toei.Oedo.Tochomae":0,"Toei.Oedo.ShinjukuNishiguchi":1,"Toei.Oedo.HigashiShinjuku":2,"Toei.Oedo.WakamatsuKawada":3,"Toei.Oedo.UshigomeYanagicho":4,"Toei.Oedo.UshigomeKagurazaka":5,"Toei.Oedo.Iidabashi":6,"Toei.Oedo.Kasuga":7,"Toei.Oedo.HongoSanchome":8,"Toei.Oedo.UenoOkachimachi":9,"Toei.Oedo.ShinOkachimachi":10,"Toei.Oedo.Kuramae":11,"Toei.Oedo.Ryogoku":12,"Toei.Oedo.Morishita":13,"Toei.Oedo.KiyosumiShirakawa":14,"Toei.Oedo.MonzenNakacho":15,"Toei.Oedo.Tsukishima":16,"Toei.Oedo.Kachidoki":17,"Toei.Oedo.Tsukijishijo":18,"Toei.Oedo.Shiodome":19,"Toei.Oedo.Daimon":20,"Toei.Oedo.Akabanebashi":21,"Toei.Oedo.AzabuJuban":22,"Toei.Oedo.Roppongi":23,"Toei.Oedo.AoyamaItchome":24,"Toei.Oedo.KokuritsuKyogijo":25,"Toei.Oedo.Yoyogi":26,"Toei.Oedo.Shinjuku":27,"Toei.Oedo.Tochomae.1":28,"Toei.Oedo.NishiShinjukuGochome":29,"Toei.Oedo.NakanoSakaue":30,"Toei.Oedo.HigashiNakano":31,"Toei.Oedo.Nakai":32,"Toei.Oedo.OchiaiMinamiNagasaki":33,"Toei.Oedo.ShinEgota":34,"Toei.Oedo.Nerima":35,"Toei.Oedo.Toshimaen":36,"Toei.Oedo.NerimaKasugacho":37,"Toei.Oedo.Hikarigaoka":38},"JR-East.Yamanote":{"JR-East.Yamanote.Osaki":30,"JR-East.Yamanote.Gotanda":1,"JR-East.Yamanote.Meguro":2,"JR-East.Yamanote.Ebisu":3,"JR-East.Yamanote.Shibuya":4,"JR-East.Yamanote.Harajuku":5,"JR-East.Yamanote.Yoyogi":6,"JR-East.Yamanote.Shinjuku":7,"JR-East.Yamanote.ShinOkubo":8,"JR-East.Yamanote.Takadanobaba":9,"JR-East.Yamanote.Mejiro":10,"JR-East.Yamanote.Ikebukuro":11,"JR-East.Yamanote.Otsuka":12,"JR-East.Yamanote.Sugamo":13,"JR-East.Yamanote.Komagome":14,"JR-East.Yamanote.Tabata":15,"JR-East.Yamanote.NishiNippori":16,"JR-East.Yamanote.Nippori":17,"JR-East.Yamanote.Uguisudani":18,"JR-East.Yamanote.Ueno":19,"JR-East.Yamanote.Okachimachi":20,"JR-East.Yamanote.Akihabara":21,"JR-East.Yamanote.Kanda":22,"JR-East.Yamanote.Tokyo":23,"JR-East.Yamanote.Yurakucho":24,"JR-East.Yamanote.Shimbashi":25,"JR-East.Yamanote.Hamamatsucho":26,"JR-East.Yamanote.Tamachi":27,"JR-East.Yamanote.TakanawaGateway":28,"JR-East.Yamanote.Shinagawa":29},"JR-East.ChuoRapid":{"JR-East.ChuoRapid.Tokyo":0,"JR-East.ChuoRapid.Kanda":1,"JR-East.ChuoRapid.Ochanomizu":2,"JR-East.ChuoRapid.Yotsuya":3,"JR-East.ChuoRapid.Shinjuku":4,"JR-East.ChuoRapid.Nakano":5,"JR-East.ChuoRapid.Koenji":6,"JR-East.ChuoRapid.Asagaya":7,"JR-East.ChuoRapid.Ogikubo":8,"JR-East.ChuoRapid.NishiOgikubo":9,"JR-East.ChuoRapid.Kichijoji":10,"JR-East.ChuoRapid.Mitaka":11,"JR-East.ChuoRapid.MusashiSakai":12,"JR-East.ChuoRapid.HigashiKoganei":13,"JR-East.ChuoRapid.MusashiKoganei":14,"JR-East.ChuoRapid.Kokubunji":15,"JR-East.ChuoRapid.NishiKokubunji":16,"JR-East.ChuoRapid.Kunitachi":17,"JR-East.ChuoRapid.Tachikawa":18,"JR-East.ChuoRapid.Hino":19,"JR-East.ChuoRapid.Toyoda":20,"JR-East.ChuoRapid.Hachioji":21,"JR-East.ChuoRapid.NishiHachioji":22,"JR-East.ChuoRapid.Takao":23},"JR-East.ChuoSobuLocal":{"JR-East.ChuoSobuLocal.Chiba":0,"JR-East.ChuoSobuLocal.NishiChiba":1,"JR-East.ChuoSobuLocal.Inage":2,"JR-East.ChuoSobuLocal.ShinKemigawa":3,"JR-East.ChuoSobuLocal.Makuhari":4,"JR-East.ChuoSobuLocal.Makuharihongo":5,"JR-East.ChuoSobuLocal.Tsudanuma":6,"JR-East.ChuoSobuLocal.HigashiFunabashi":7,"JR-East.ChuoSobuLocal.Funabashi":8,"JR-East.ChuoSobuLocal.NishiFunabashi":9,"JR-East.ChuoSobuLocal.ShimosaNakayama":10,"JR-East.ChuoSobuLocal.MotoYawata":11,"JR-East.ChuoSobuLocal.Ichikawa":12,"JR-East.ChuoSobuLocal.Koiwa":13,"JR-East.ChuoSobuLocal.ShinKoiwa":14,"JR-East.ChuoSobuLocal.Hirai":15,"JR-East.ChuoSobuLocal.Kameido":16,"JR-East.ChuoSobuLocal.Kinshicho":17,"JR-East.ChuoSobuLocal.Ryogoku":18,"JR-East.ChuoSobuLocal.Asakusabashi":19,"JR-East.ChuoSobuLocal.Akihabara":20,"JR-East.ChuoSobuLocal.Ochanomizu":21,"JR-East.ChuoSobuLocal.Suidobashi":22,"JR-East.ChuoSobuLocal.Iidabashi":23,"JR-East.ChuoSobuLocal.Ichigaya":24,"JR-East.ChuoSobuLocal.Yotsuya":25,"JR-East.ChuoSobuLocal.Shinanomachi":26,"JR-East.ChuoSobuLocal.Sendagaya":27,"JR-East.ChuoSobuLocal.Yoyogi":28,"JR-East.ChuoSobuLocal.Shinjuku":29,"JR-East.ChuoSobuLocal.Okubo":30,"JR-East.ChuoSobuLocal.HigashiNakano":31,"JR-East.ChuoSobuLocal.Nakano":32,"JR-East.ChuoSobuLocal.Koenji":33,"JR-East.ChuoSobuLocal.Asagaya":34,"JR-East.ChuoSobuLocal.Ogikubo":35,"JR-East.ChuoSobuLocal.NishiOgikubo":36,"JR-East.ChuoSobuLocal.Kichijoji":37,"JR-East.ChuoSobuLocal.Mitaka":38}};
+
+const LON_MIN=139.55,LON_MAX=139.97,LAT_MIN=35.58,LAT_MAX=35.82;
+const SVG_W=640,SVG_H=310,PAD=18;
+function toSVG(lon,lat){
+  return[
+    Math.round((PAD+(lon-LON_MIN)/(LON_MAX-LON_MIN)*(SVG_W-2*PAD))*10)/10,
+    Math.round((SVG_H-PAD-(lat-LAT_MIN)/(LAT_MAX-LAT_MIN)*(SVG_H-2*PAD))*10)/10
+  ];
+}
+
+// ★ Referral URL: KKday 제휴 링크 (여기에 본인 제휴 코드 추가)
+// 예: https://www.kkday.com/ko/product/5989?cid=XXXXX
+const KKDAY_REF = '';  // KKday 제휴 코드 파라미터 (예: '?cid=12345')
+const JR_REF = '';     // JR East 링크 추가 파라미터 (없으면 공란)
+
+const PASSES=[
+  {id:'subway',name:'도쿄메트로+도에이 승차권',sub:'메트로 9개 + 도에이 4개 · 24/48/72시간',bc:'ba',bt:'Metro+Toei',
+   shop:'mrt', shopLabel:'마이리얼트립에서 구매',
+   buyUrl:`https://myrealt.rip/YQ9417`,
+   lines:['TokyoMetro.Ginza','TokyoMetro.Marunouchi','TokyoMetro.Hibiya','TokyoMetro.Tozai','TokyoMetro.Chiyoda','TokyoMetro.Yurakucho','TokyoMetro.Hanzomon','TokyoMetro.Namboku','TokyoMetro.Fukutoshin','Toei.Asakusa','Toei.Mita','Toei.Shinjuku','Toei.Oedo']},
+  {id:'metro',name:'도쿄메트로 24시간 승차권',sub:'메트로 9개 노선 · 도에이 제외 · 현지 구매',bc:'bm',bt:'Metro Only',
+   shop:'local', shopLabel:'현지 구매 안내',
+   buyUrl:`https://www.tokyometro.jp/kr/ticket/1day/index.html`,
+   lines:['TokyoMetro.Ginza','TokyoMetro.Marunouchi','TokyoMetro.Hibiya','TokyoMetro.Tozai','TokyoMetro.Chiyoda','TokyoMetro.Yurakucho','TokyoMetro.Hanzomon','TokyoMetro.Namboku','TokyoMetro.Fukutoshin']},
+  {id:'tokunai',name:'JR 도쿠나이 패스',sub:'JR 야마노테·주오·소부선 등 · 도쿄 23구 · 1일',bc:'bj',bt:'JR Only',
+   shop:'jr', shopLabel:'JR East 공식 안내',
+   buyUrl:`https://www.jreast.co.jp/ko/multi/pass/tokunai_pass.html${JR_REF}`,
+   lines:['JR-East.Yamanote','JR-East.ChuoRapid','JR-East.ChuoSobuLocal']},
+  {id:'freekippu',name:'도쿄 프리킵푸',sub:'메트로+도에이+JR+도에이버스 · 1일',bc:'ba',bt:'All Lines',
+   shop:'jr', shopLabel:'JR East 공식 안내',
+   buyUrl:`https://www.jreast.co.jp/ko/multi/pass/tokyo_free.html${JR_REF}`,
+   lines:['TokyoMetro.Ginza','TokyoMetro.Marunouchi','TokyoMetro.Hibiya','TokyoMetro.Tozai','TokyoMetro.Chiyoda','TokyoMetro.Yurakucho','TokyoMetro.Hanzomon','TokyoMetro.Namboku','TokyoMetro.Fukutoshin','Toei.Asakusa','Toei.Mita','Toei.Shinjuku','Toei.Oedo','JR-East.Yamanote','JR-East.ChuoRapid','JR-East.ChuoSobuLocal']}
+];
+
+let selPass=null;
+
+// ── [수정 1] 드롭다운 중복 제거 ──────────────────────────────
+// stem 기준으로 역명 dedup. 드롭다운 value = stem
+// BFS는 sid 기반이므로, stem → 해당 패스에서 이용가능한 모든 sid 매핑 필요
+function getStemToSids(passLines){
+  const avail=new Set(passLines);
+  const map={};
+  passLines.forEach(lid=>{
+    const r=LINES[lid];if(!r)return;
+    r.stations.forEach(sid=>{
+      const s=STATIONS[sid];if(!s)return;
+      const stem=s.stem;
+      if(!map[stem])map[stem]=[];
+      if(!map[stem].includes(sid))map[stem].push(sid);
+    });
+  });
+  return map;
+}
+
+// ── [수정 2] 방면 계산 ───────────────────────────────────────
+// 노선 배열에서 from_idx < to_idx → ascending 방향
+// from_idx > to_idx → descending 방향
+function getDirection(lineId, fromSid, toSid){
+  const r=LINES[lineId];if(!r)return'';
+  const idx=LINE_IDX[lineId];if(!idx)return'';
+  const fi=idx[fromSid],ti=idx[toSid];
+  if(fi==null||ti==null)return'';
+  if(fi===ti)return'';
+  return fi<ti ? r.asc : r.desc;
+}
+
+// ── BFS ─────────────────────────────────────────────────────
+function buildGraph(passLines){
+  const avail=new Set(passLines);
+  const graph={};
+  const addEdge=(a,b,line)=>{
+    if(!graph[a])graph[a]=[];
+    if(!graph[b])graph[b]=[];
+    graph[a].push({to:b,line});
+    graph[b].push({to:a,line});
+  };
+  passLines.forEach(lid=>{
+    const r=LINES[lid];if(!r)return;
+    const sts=r.stations;
+    for(let i=0;i<sts.length-1;i++)addEdge(sts[i],sts[i+1],lid);
+  });
+  // stem 환승
+  Object.entries(STEM_MAP).forEach(([stem,ids])=>{
+    const active=ids.filter(sid=>{
+      if(!STATIONS[sid])return false;
+      const lid=sid.split('.').slice(0,2).join('.');
+      return avail.has(lid);
+    });
+    for(let i=0;i<active.length;i++)
+      for(let j=i+1;j<active.length;j++)
+        addEdge(active[i],active[j],'transfer');
+  });
+  return graph;
+}
+
+function bfs(graph,starts,ends){
+  // starts/ends: sid 배열 (같은 역명의 모든 sid)
+  const endSet=new Set(ends);
+  const q=[],vis=new Set();
+  starts.forEach(s=>{if(!vis.has(s)){vis.add(s);q.push([s,[]]);} });
+  while(q.length){
+    const[cur,path]=q.shift();
+    for(const{to,line}of(graph[cur]||[])){
+      if(vis.has(to))continue;
+      const np=[...path,{from:cur,to,line}];
+      if(endSet.has(to))return np;
+      vis.add(to);q.push([to,np]);
+    }
+  }
+  return null;
+}
+
+// ── 렌더링 ──────────────────────────────────────────────────
+function renderPasses(){
+  document.getElementById('pgrid').innerHTML=PASSES.map(p=>{
+    const isLocal=p.shop==='local';
+    const icon=p.shop==='mrt'?'🛒':p.shop==='kkday'?'🛒':isLocal?'📍':'🔗';
+    const label=p.shop==='mrt'?'마이리얼트립에서 구매 →'
+      :p.shop==='kkday'?'KKday에서 구매 →'
+      :isLocal?'현지 구매 안내 →'
+      :'JR East 공식 안내 →';
+    const localNote=isLocal?`<div class="local-notice">현지 도쿄메트로 역 자동발매기에서 구매 · 온라인 사전구매 불가</div>`:'';
+    return `<div class="pc" id="pc-${p.id}" onclick="selectPass('${p.id}')">
+      <span class="pc-badge ${p.bc}">${p.bt}</span>
+      <div class="pc-name">${p.name}</div>
+      <div class="pc-sub">${p.sub}</div>
+      ${localNote}
+      <a class="pc-buy-link" href="${p.buyUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${icon} ${label}</a>
+    </div>`;
+  }).join('');
+}
+
+function selectPass(pid){
+  selPass=PASSES.find(p=>p.id===pid);
+  document.querySelectorAll('.pc').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('pc-'+pid).classList.add('sel');
+  renderMap(selPass);
+  renderLegend(selPass);
+  populateSels(selPass);
+  document.getElementById('result').innerHTML=
+    '<div class="empty-state"><div class="empty-icon">🔍</div>출발역과 도착역을 선택하세요</div>';
+}
+
+function renderMap(pass){
+  const avail=new Set(pass.lines);
+  document.getElementById('maptitle').textContent=pass.name;
+  document.getElementById('mapcnt').textContent=pass.lines.length+'개 노선';
+  const svg=document.getElementById('svgmap');
+  let paths='',dots='';
+  const allLines=[...pass.lines,...Object.keys(LINES).filter(l=>!avail.has(l))];
+  allLines.forEach(lid=>{
+    const r=LINES[lid];if(!r)return;
+    const isAvail=avail.has(lid);
+    const pts=r.stations.map(sid=>{
+      const s=STATIONS[sid];return s?toSVG(...s.coord):null;
+    }).filter(Boolean);
+    if(pts.length<2)return;
+    paths+=`<path d="M${pts.map(p=>p.join(',')).join('L')}" stroke="${r.color}" stroke-width="${isAvail?2.8:0.8}" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="${isAvail?0.9:0.07}"/>`;
+  });
+  const drawn=new Set();
+  pass.lines.forEach(lid=>{
+    const r=LINES[lid];if(!r)return;
+    r.stations.forEach(sid=>{
+      const s=STATIONS[sid];if(!s||drawn.has(sid))return;
+      drawn.add(sid);
+      const[x,y]=toSVG(...s.coord);
+      const stemSids=STEM_MAP[s.stem]||[];
+      const isTransfer=stemSids.filter(id=>{
+        const l=id.split('.').slice(0,2).join('.');return avail.has(l);
+      }).length>1;
+      dots+=isTransfer
+        ?`<circle cx="${x}" cy="${y}" r="4.5" fill="white" stroke="${r.color}" stroke-width="2"/>`
+        :`<circle cx="${x}" cy="${y}" r="2.5" fill="${r.color}" opacity="0.9"/>`;
+    });
+  });
+  svg.innerHTML=paths+dots;
+}
+
+function renderLegend(pass){
+  const types=[
+    {k:'metro',l:'도쿄 메트로',c:'#378ADD'},
+    {k:'toei',l:'도에이 지하철',c:'#CE045B'},
+    {k:'jr',l:'JR',c:'#80C342'}
+  ];
+  const active=types.filter(t=>pass.lines.some(l=>LINES[l]?.type===t.k));
+  document.getElementById('legrow').innerHTML=
+    active.map(t=>`<div class="leg"><div class="leg-line" style="background:${t.c}"></div><span>${t.l}</span></div>`).join('')+
+    `<div class="leg"><div class="leg-dot"></div><span>환승역</span></div>`;
+}
+
+function populateSels(pass){
+  // [수정 1] stem 기준 중복 제거 → 역명 한 번만 표시
+  const seen=new Set();
+  const list=[];
+  pass.lines.forEach(lid=>{
+    const r=LINES[lid];if(!r)return;
+    r.stations.forEach(sid=>{
+      const s=STATIONS[sid];if(!s)return;
+      const stem=s.stem;
+      if(!seen.has(stem)){
+        seen.add(stem);
+        // value = stem (고유 역 식별자로 사용)
+        list.push({stem, ko:s.ko, en:s.en});
+      }
+    });
+  });
+  list.sort((a,b)=>a.ko.localeCompare(b.ko,'ko'));
+  const opts='<option value="">선택</option>'+
+    list.map(s=>`<option value="${s.stem}">${s.ko} (${s.en})</option>`).join('');
+  document.getElementById('fromsel').innerHTML=opts;
+  document.getElementById('tosel').innerHTML=opts;
+  ['fromsel','tosel'].forEach(id=>
+    document.getElementById(id).onchange=checkBtn);
+}
+
+function checkBtn(){
+  const f=document.getElementById('fromsel').value;
+  const t=document.getElementById('tosel').value;
+  document.getElementById('gobtn').disabled=!(f&&t&&f!==t);
+}
+
+function stName(sid){
+  const s=STATIONS[sid];
+  if(!s) return sid;
+  return `<span class="s-st-ko">${s.ko}</span><span class="s-st-en">(${s.en})</span>`;
+}
+
+function doSearch(){
+  const fromStem=document.getElementById('fromsel').value;
+  const toStem=document.getElementById('tosel').value;
+  if(!fromStem||!toStem||!selPass)return;
+
+  const stemToSids=getStemToSids(selPass.lines);
+  const fromSids=stemToSids[fromStem]||[];
+  const toSids=stemToSids[toStem]||[];
+  const fromS=STATIONS[fromSids[0]]||{};
+  const toS=STATIONS[toSids[0]]||{};
+
+  if(!fromSids.length||!toSids.length){
+    document.getElementById('result').innerHTML=
+      `<div class="warn-card">⚠️ 선택한 역을 이 패스로 이용할 수 없습니다.</div>`;
+    return;
+  }
+
+  const graph=buildGraph(selPass.lines);
+  const path=bfs(graph,fromSids,toSids);
+  const ra=document.getElementById('result');
+
+  if(!path){
+    ra.innerHTML=`<div class="warn-card">⚠️ <strong>${fromS.ko||fromStem}</strong>에서 <strong>${toS.ko||toStem}</strong>까지 이 패스로 연결되는 경로가 없습니다.<br>다른 패스를 선택하거나 일부 구간에 추가 요금이 필요합니다.</div>`;
+    return;
+  }
+
+  // 구간 압축
+  const segs=[];let cur=null;
+  path.forEach(step=>{
+    if(!cur||cur.line!==step.line){
+      if(cur)segs.push(cur);
+      cur={line:step.line,from:step.from,to:step.to,stops:1,allSids:[step.from,step.to]};
+    } else {cur.to=step.to;cur.stops++;cur.allSids.push(step.to);}
+  });
+  if(cur)segs.push(cur);
+
+  segs.forEach(seg=>{
+    if(seg.line==='transfer')return;
+    seg.direction=getDirection(seg.line,seg.from,seg.to);
+  });
+
+  const realSegs=segs.filter(s=>s.line!=='transfer');
+  const transfers=realSegs.length-1;
+  const totalStops=realSegs.reduce((n,s)=>n+s.stops,0);
+
+  // ── [수정 2] 경로 미니맵 SVG ────────────────────────────────
+  const mapSvg=renderRouteMap(path,segs,selPass.lines);
+
+  // ── [수정 1+2] 결과 HTML ────────────────────────────────────
+  let html=`
+  <div class="route-map-wrap">${mapSvg}</div>
+  <div class="result-card">
+    <div class="res-title">
+      추천 경로
+      <span class="res-badge">환승 ${transfers}회 · ${totalStops}개 역</span>
+    </div>`;
+
+  segs.forEach((seg,i)=>{
+    const isLast=i===segs.length-1;
+    if(seg.line==='transfer'){
+      const st=STATIONS[seg.from];
+      html+=`<div class="step transfer-step">
+        <div class="step-line">
+          <div class="s-dot" style="background:#ddd"></div>
+          ${!isLast?'<div class="s-bar"></div>':''}
+        </div>
+        <div class="step-info">
+          <div class="s-arr">↔ ${stName(seg.from)} 환승</div>
+        </div>
+      </div>`;
+      return;
+    }
+    const r=LINES[seg.line];
+    const col=r?.color||'#888';
+    const dirTag=seg.direction?`<span class="direction-tag">${seg.direction}</span>`:'';
+
+    html+=`<div class="step">
+      <div class="step-line">
+        <div class="s-dot" style="background:${col}"></div>
+        ${!isLast?'<div class="s-bar"></div>':''}
+      </div>
+      <div class="step-info">
+        <div class="s-arr">${stName(seg.from)} 승차 ${dirTag}</div>
+        <div class="s-ln">
+          <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${col};vertical-align:middle;margin-right:4px;"></span>
+          ${r?.ko||seg.line} · ${seg.stops}개 역 이동
+          <span style="color:var(--text);font-weight:600;"> → ${stName(seg.to)}</span>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  // 최종 도착
+  const lastSeg=segs[segs.length-1];
+  const lastR=LINES[lastSeg.line];
+  html+=`<div class="step">
+    <div class="step-line"><div class="s-dot" style="background:${lastR?.color||'#888'}"></div></div>
+    <div class="step-info">
+      <div class="s-arr">${stName(lastSeg.to)} 도착 ✅</div>
+      <div class="s-ln">패스로 전액 커버 · 추가 요금 없음</div>
+    </div>
+  </div></div>`;
+
+  html+=`<div class="info-card">모든 구간이 <strong>${selPass.name}</strong>으로 커버됩니다.</div>`;
+
+  // 구매 배너 (referral)
+  const btnClass=selPass.shop==='kkday'?'buy-btn-kkday':selPass.shop==='mrt'?'buy-btn-mrt':selPass.shop==='local'?'buy-btn-local':'buy-btn-jr';
+  const shopIcon=selPass.shop==='jr'?'🔗':selPass.shop==='local'?'📍':'🛒';
+  const shopLabelFull=selPass.shop==='mrt'?'마이리얼트립에서 구매하기'
+    :selPass.shop==='kkday'?'KKday에서 구매하기'
+    :selPass.shop==='local'?'도쿄 현지 구매 안내 보기'
+    :'JR East 공식 사이트 안내';
+  const localExtra=selPass.shop==='local'
+    ?`<div class="local-notice" style="text-align:center;margin-top:4px;margin-bottom:8px;">현지 도쿄메트로 역 자동발매기에서 구매 · 여권 불필요 · 성인 700¥</div>`
+    :'';
+  html+=`${localExtra}<a class="${btnClass}" href="${selPass.buyUrl}" target="_blank" rel="noopener" style="display:flex;width:100%;box-sizing:border-box;justify-content:center;margin-bottom:10px;">
+    ${shopIcon} ${shopLabelFull}
+  </a>`;
+  ra.innerHTML=html;
+}
+
+// ── 경로 미니맵 SVG 렌더링 ──────────────────────────────────
+function renderRouteMap(path, segs, passLines){
+  const avail=new Set(passLines);
+
+  // 경로에 등장하는 모든 sid 수집
+  const routeSids=new Set();
+  path.forEach(step=>{routeSids.add(step.from);routeSids.add(step.to);});
+
+  // 경로 sid들의 좌표 범위 계산
+  let minLon=999,maxLon=-999,minLat=999,maxLat=-999;
+  routeSids.forEach(sid=>{
+    const s=STATIONS[sid];if(!s)return;
+    minLon=Math.min(minLon,s.coord[0]);maxLon=Math.max(maxLon,s.coord[0]);
+    minLat=Math.min(minLat,s.coord[1]);maxLat=Math.max(maxLat,s.coord[1]);
+  });
+
+  // 여백 추가
+  const padLon=(maxLon-minLon)*0.25||0.02;
+  const padLat=(maxLat-minLat)*0.25||0.02;
+  minLon-=padLon;maxLon+=padLon;
+  minLat-=padLat;maxLat+=padLat;
+
+  const W=640,H=260,P=32;
+  function toXY(lon,lat){
+    return[
+      Math.round((P+(lon-minLon)/(maxLon-minLon)*(W-2*P))*10)/10,
+      Math.round((H-P-(lat-minLat)/(maxLat-minLat)*(H-2*P))*10)/10
+    ];
+  }
+
+  let svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;min-width:320px">`;
+
+  // 배경 전체 노선 (흐리게)
+  passLines.forEach(lid=>{
+    const r=LINES[lid];if(!r)return;
+    const pts=r.stations.map(sid=>{
+      const s=STATIONS[sid];if(!s)return null;
+      const[x,y]=toXY(...s.coord);
+      return`${x},${y}`;
+    }).filter(Boolean);
+    if(pts.length<2)return;
+    svg+=`<path d="M${pts.join('L')}" stroke="${r.color}" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.12"/>`;
+  });
+
+  // 경로 구간별 강조 라인
+  const realSegs=segs.filter(s=>s.line!=='transfer');
+  realSegs.forEach(seg=>{
+    const r=LINES[seg.line];if(!r)return;
+    const lineIdx=LINE_IDX[seg.line]||{};
+    const fromIdx=lineIdx[seg.from];
+    const toIdx=lineIdx[seg.to];
+    if(fromIdx==null||toIdx==null)return;
+    const start=Math.min(fromIdx,toIdx);
+    const end=Math.max(fromIdx,toIdx);
+    const sliceSids=r.stations.slice(start,end+1);
+    const pts=sliceSids.map(sid=>{
+      const s=STATIONS[sid];if(!s)return null;
+      const[x,y]=toXY(...s.coord);return`${x},${y}`;
+    }).filter(Boolean);
+    if(pts.length<2)return;
+    svg+=`<path d="M${pts.join('L')}" stroke="${r.color}" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>`;
+  });
+
+  // 경로 위 역 점 + 라벨 (주요 역만: 출발, 환승, 도착)
+  const keyStops=new Set();
+  segs.forEach((seg,i)=>{
+    if(i===0) keyStops.add(seg.from);
+    keyStops.add(seg.to);
+    if(seg.line==='transfer') keyStops.add(seg.from);
+  });
+
+  // 역 좌표 미리 계산 + x 기준 정렬 (왼→오른쪽 순서로 라벨 배치)
+  const stopData=[];
+  keyStops.forEach(sid=>{
+    const s=STATIONS[sid];if(!s)return;
+    const[x,y]=toXY(...s.coord);
+    const isFirst=sid===segs[0]?.from;
+    const isLast=sid===segs[segs.length-1]?.to;
+    stopData.push({sid,s,x,y,isFirst,isLast});
+  });
+  stopData.sort((a,b)=>a.x-b.x);
+
+  // 역 점 렌더링 (위치 고정 — 라벨과 무관)
+  stopData.forEach(({x,y,isFirst,isLast})=>{
+    if(isFirst||isLast){
+      svg+=`<circle cx="${x}" cy="${y}" r="7" fill="${isFirst?'#1D9E75':'#E65100'}" stroke="white" stroke-width="2"/>`;
+    } else {
+      svg+=`<circle cx="${x}" cy="${y}" r="5" fill="white" stroke="#555" stroke-width="1.5"/>`;
+    }
+  });
+
+  // 라벨 배치: 역 점은 고정, 텍스트만 위아래 교대
+  // 겹침 판단은 x축 거리 기준 — 가까운 역끼리 교대 방향
+  const NEAR=55; // px 이하면 가까운 역으로 판단
+  const labelDirs=[]; // 각 역의 방향 결정 ('up'|'down')
+
+  stopData.forEach((d,i)=>{
+    const prev=stopData[i-1];
+    if(!prev||Math.abs(d.x-prev.x)>NEAR){
+      // 이전 역과 멀면: y 위치 기반 기본 방향 (역이 맵 하단이면 위, 상단이면 아래)
+      labelDirs.push(d.y>H*0.55?'up':'down');
+    } else {
+      // 가까우면: 이전 역과 반대 방향
+      labelDirs.push(labelDirs[i-1]==='up'?'down':'up');
+    }
+  });
+
+  // 라벨 오프셋 상수
+  const UP_KO=-14, UP_EN=-1;   // 역 점 위
+  const DN_KO=18,  DN_EN=31;   // 역 점 아래
+
+  stopData.forEach((d,i)=>{
+    const{x,y,s}=d;
+    const ko=s.ko; const en=s.en;
+    const dir=labelDirs[i];
+    const koY=y+(dir==='up'?UP_KO:DN_KO);
+    const enY=y+(dir==='up'?UP_EN:DN_EN);
+    const anchor=x<W*0.15?'start':x>W*0.85?'end':'middle';
+
+    // 텍스트 가독성: 흰색 외곽선(stroke) 처리
+    const textStyle=`font-family='Noto Sans KR,sans-serif' text-anchor='${anchor}'`;
+    svg+=`<text x="${x}" y="${koY}" ${textStyle} font-size="11" font-weight="700" stroke="white" stroke-width="3" stroke-linejoin="round" paint-order="stroke" fill="#1a1917">${ko}</text>`;
+    svg+=`<text x="${x}" y="${enY}" ${textStyle} font-size="9" stroke="white" stroke-width="2.5" stroke-linejoin="round" paint-order="stroke" fill="#6b6860">${en}</text>`;
+  });
+
+  svg+=`</svg>`;
+  return svg;
+}
+
+renderPasses();
+</script>
+</body>
+</html>
